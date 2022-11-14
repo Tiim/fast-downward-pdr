@@ -387,6 +387,16 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
+    NAME PDR_SEARCH
+    HELP "Property-directed reachability search algorithm"
+    SOURCES
+        search_engines/pdr_search
+    DEPENDS ORDERED_SET
+    DEPENDENCY_ONLY
+)
+
+
+fast_downward_plugin(
     NAME PLUGIN_ASTAR
     HELP "A* search"
     SOURCES
@@ -441,6 +451,15 @@ fast_downward_plugin(
         search_engines/plugin_lazy_wastar
     DEPENDS LAZY_SEARCH SEARCH_COMMON
 )
+
+fast_downward_plugin(
+    NAME PLUGIN_PDR_SEARCH
+    HELP "Property directed reachability search"
+    SOURCES
+        search_engines/plugin_pdr
+    DEPENDS PDR_SEARCH SEARCH_COMMON
+)
+
 
 fast_downward_plugin(
     NAME ENFORCED_HILL_CLIMBING_SEARCH
