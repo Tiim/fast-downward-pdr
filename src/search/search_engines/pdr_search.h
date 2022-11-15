@@ -2,32 +2,77 @@
 #define SEARCH_ENGINES_PDR_SEARCH_H
 
 #include "../search_engine.h"
+#include "search_common.h"
 
-#include <memory>
 #include <vector>
+#include <set>
+#include <memory>
+#include <optional>
 
-namespace options {
-class OptionParser;
-class Options;
+namespace options
+{
+    class OptionParser;
+    class Options;
 }
 
-namespace pdr_search {
-class PDRSearch : public SearchEngine {
+namespace pdr_search
+{
 
-protected:
-    virtual void initialize() override;
-    virtual SearchStatus step() override;
+    // only represent unit clause for now
+    class Clause
+    {
+    private:
+        const int variable;
+        const int value = 1;
 
-public:
-    PDRSearch(const options::Options &opts);
-    ~PDRSearch() = default;
+    public:
+        Clause(int variable, int value);
+        bool operator<(const Clause &b) const;
 
-    virtual void print_statistics() const override;
+        static Clause FromFact(FactProxy fp);
+    };
 
-    void dump_search_space() const;
-};
+    class Layer
+    {
+    private:
+        std::set<Clause> clauses_set;
 
-extern void add_options_to_parser(options::OptionParser &parser);
+
+    public:
+        Layer(const Layer &l);
+        Layer();
+        ~Layer();
+
+        // L_i <- L_i \cup \{c\}
+        void add_clause(Clause c);
+        // L_i \ L_l
+        Layer without(Layer *l);
+
+        bool models(State s);
+
+        bool extend(State s, State *successor);
+        
+    };
+
+    class PDRSearch : public SearchEngine
+    {
+        std::vector<Layer> layers;
+        int iteration = 0;
+
+    protected:
+        virtual void initialize() override;
+        virtual SearchStatus step() override;
+
+    public:
+        PDRSearch(const options::Options &opts);
+        ~PDRSearch() = default;
+
+        virtual void print_statistics() const override;
+
+        void dump_search_space() const;
+    };
+
+    extern void add_options_to_parser(options::OptionParser &parser);
 }
 
 #endif
