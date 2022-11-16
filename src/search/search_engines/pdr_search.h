@@ -109,6 +109,8 @@ namespace pdr_search
         std::vector<Layer> layers;
         int iteration = 0;
 
+        Layer get_layer(int i);
+
     protected:
         virtual void initialize() override;
         virtual SearchStatus step() override;
@@ -121,7 +123,7 @@ namespace pdr_search
 
         LiteralSet extend(State s, Layer L);
 
-        
+
         void dump_search_space() const;
     };
 

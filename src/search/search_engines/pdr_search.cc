@@ -358,17 +358,34 @@ namespace pdr_search
     {
     }
 
+    Layer PDRSearch::get_layer(int i) 
+    {
+        if (layers.size() > i)
+        {
+            return layers[i];
+        } else if (i == 0) 
+        {
+            Layer l0;
+            auto g = this->task_proxy.get_goals();
+            for (size_t i = 0; i < g.size(); i++)
+            {
+                l0.add_clause(LiteralSet(Literal::from_fact(g[i])));
+            }
+            this->layers.insert(this->layers.begin(), l0);
+            return l0;
+        } else {
+            Layer l_i;
+            this->layers.insert(this->layers.begin(), l_i);
+            
+            // TODO: initialize layer with heuristic here
+
+            return l_i;
+        }
+    }
+
     void PDRSearch::initialize()
     {
-        // Initialize L_0
-        Layer l0;
-        this->layers.insert(this->layers.begin(), l0);
-
-        auto g = this->task_proxy.get_goals();
-        for (size_t i = 0; i < g.size(); i++)
-        {
-            l0.add_clause(LiteralSet(Literal::from_fact(g[i])));
-        }
+        get_layer(0);
     }
 
     void PDRSearch::print_statistics() const
@@ -386,7 +403,7 @@ namespace pdr_search
 
         // line 5
         auto s_i = this->task_proxy.get_initial_state();
-        if (layers[k].modeled_by(s_i))
+        if (get_layer(k).modeled_by(s_i))
         {
             // line 6
             std::priority_queue<Obligation> Q;
@@ -403,8 +420,28 @@ namespace pdr_search
                 // line 9
                 if (si.get_priority() == 0)
                 {
+                    // line 10
                     return SearchStatus::SOLVED;
                 }
+
+                // line 11 TODO
+                //if extend(s, L_i-1) returns a successor state t
+                State *t = nullptr;
+
+                //line 12
+                Q.push(si);
+                Q.push(Obligation(*t, si.get_priority()-1));
+
+                // line 13 TOOD
+                // else
+                LiteralSet r;
+
+                for(int j = 0; j <= si.get_priority(); j++)
+                {
+
+                }
+
+                // line 14
             }
         }
 
