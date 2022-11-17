@@ -61,8 +61,19 @@ namespace pdr_search
         void apply_literal(Literal l);
         bool contains_literal(Literal l) const;
         bool is_subset_eq_of(LiteralSet ls) const;
+
+        // Returns true if this LiteralSet is a model
+        // of s.
+        // This means it will return false if for any literal l in
+        // s the inverse literal ¬l is element of this set.
+        //
+        // Equivalent to the ⊧ (models) operator
+        // TODO: does this depend on if both sets are clauses or cubes?
         bool models(LiteralSet s) const;
 
+
+        // Coverts a state to a literal set as a cube
+        // Same as the Lits(s) function in the paper
         static LiteralSet from_state(const State &s);
     };
 
@@ -91,15 +102,14 @@ namespace pdr_search
         size_t size() const;
         const std::set<LiteralSet> get_clauses() const;
 
-        // Lᵢ ← Lᵢ ∪ {c}
+        // L ← L ∪ {c}
         void add_clause(LiteralSet c);
-        // add the clause c to the set, but removes clause ¬c
-        // Lᵢ ← (Lᵢ ∖ {¬ c}) ∪ {c}
-        //void apply_clause(LiteralSet c);
+        // L ← L ∖ {c}
         void remove_clause(LiteralSet c);
         bool contains_clause(LiteralSet c) const;
         bool is_subset_eq_of(Layer l) const;
-        // Lᵢ ∖ Lₗ
+        
+        // Lₜₕᵢₛ ∖ Lₗ
         Layer without(Layer *l);
         bool modeled_by(State s);
     };

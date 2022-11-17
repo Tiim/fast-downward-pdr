@@ -136,7 +136,6 @@ namespace pdr_search
         return true;
     }
 
-    // ⊧ (\models)
     bool LiteralSet::models(LiteralSet s) const
     {
         for (Literal l : s.get_literals())
