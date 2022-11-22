@@ -13,8 +13,7 @@
 #include <iostream>
 #include <vector>
 
-
-// TODO: per improvements unordered sets
+// TODO: perf improvements unordered sets
 
 namespace pdr_search
 {
@@ -75,14 +74,16 @@ namespace pdr_search
 
     LiteralSet LiteralSet::invert() const
     {
-        assert(is_unit());
-        Literal l = *(literals.begin());
-        LiteralSet new_set = LiteralSet(l.invert());
-        new_set.clause = !clause;
-        return new_set;
+        std::set<Literal> new_set;
+        for (auto l : literals)
+        {
+            new_set.insert(l.invert());
+        }
+        LiteralSet literal_set = LiteralSet(new_set, !clause);
+        return literal_set;
     }
 
-    size_t LiteralSet::size() const 
+    size_t LiteralSet::size() const
     {
         return literals.size();
     }
@@ -151,24 +152,6 @@ namespace pdr_search
         return true;
     }
 
-    LiteralSet LiteralSet::from_state(const State &s)
-    {
-        s.unpack();
-        int i = 0;
-        std::set<Literal> result;
-        for (auto value : s.get_unpacked_values())
-        {
-            i += 1;
-            Literal v = Literal(i, value);
-            result.insert(result.begin(), v);
-        }
-        // TODO: insert negated litrals
-        LiteralSet c = LiteralSet();
-        c.literals = result;
-        c.clause = false;
-        return c;
-    }
-
     Obligation::Obligation(State s, int p) : state(s), priority(p)
     {
     }
@@ -189,17 +172,17 @@ namespace pdr_search
         return priority > o.priority;
     }
 
-    Layer::Layer()
+    Layer::Layer(const PDRSearch *search) : search_task(search)
     {
         this->clauses = std::set<LiteralSet>();
     }
 
-    Layer::Layer(const Layer &l)
+    Layer::Layer(const PDRSearch *search, const Layer &l) : search_task(search)
     {
         this->clauses = std::set<LiteralSet>(l.clauses);
     }
 
-    Layer::Layer(const std::set<LiteralSet> c) : clauses(c) 
+    Layer::Layer(const PDRSearch *search, const std::set<LiteralSet> c) : clauses(c), search_task(search)
     {
         for (LiteralSet ls : c)
         {
@@ -260,7 +243,7 @@ namespace pdr_search
             l->clauses.begin(), l->clauses.end(),
             inserter(result, result.end()));
 
-        Layer lnew;
+        Layer lnew = Layer(this->search_task);
         for (auto clause : result)
         {
             lnew.add_clause(clause);
@@ -270,7 +253,7 @@ namespace pdr_search
 
     bool Layer::modeled_by(State s)
     {
-        for (Literal v : LiteralSet::from_state(s).get_literals())
+        for (Literal v : this->search_task->from_state(s).get_literals())
         {
             if (contains_clause(LiteralSet(v.invert())))
             {
@@ -284,12 +267,12 @@ namespace pdr_search
     {
         auto A = this->task_proxy.get_operators();
 
-        LiteralSet s = LiteralSet::from_state(state);
+        LiteralSet s = this->from_state(state);
         //  Pseudocode 3
 
         // line 2
-        Layer Ls;
-        Layer Rnoop;
+        Layer Ls = Layer(this);
+        Layer Rnoop = Layer(this);
 
         std::vector<Layer> Reasons;
         for (LiteralSet c : L.get_clauses())
@@ -327,7 +310,7 @@ namespace pdr_search
             }
 
             // line 10
-            Layer Lt;
+            Layer Lt = Layer(this);
             for (LiteralSet c : L.get_clauses())
             {
                 if (!t.models(c))
@@ -361,14 +344,15 @@ namespace pdr_search
     {
     }
 
-    Layer PDRSearch::get_layer(int i) 
+    Layer PDRSearch::get_layer(int i)
     {
         if (layers.size() > i)
         {
             return layers[i];
-        } else if (i == 0) 
+        }
+        else if (i == 0)
         {
-            Layer l0;
+            Layer l0 = Layer(this);
             auto g = this->task_proxy.get_goals();
             for (size_t i = 0; i < g.size(); i++)
             {
@@ -376,10 +360,12 @@ namespace pdr_search
             }
             this->layers.insert(this->layers.begin(), l0);
             return l0;
-        } else {
-            Layer l_i;
+        }
+        else
+        {
+            Layer l_i = Layer(this);
             this->layers.insert(this->layers.begin(), l_i);
-            
+
             // TODO: initialize layer with heuristic here
 
             return l_i;
@@ -428,20 +414,19 @@ namespace pdr_search
                 }
 
                 // line 11 TODO
-                //if extend(s, L_i-1) returns a successor state t
+                // if extend(s, L_i-1) returns a successor state t
                 State *t = nullptr;
 
-                //line 12
+                // line 12
                 Q.push(si);
-                Q.push(Obligation(*t, si.get_priority()-1));
+                Q.push(Obligation(*t, si.get_priority() - 1));
 
                 // line 13 TOOD
                 // else
                 LiteralSet r;
 
-                for(int j = 0; j <= si.get_priority(); j++)
+                for (int j = 0; j <= si.get_priority(); j++)
                 {
-
                 }
 
                 // line 14
@@ -449,6 +434,39 @@ namespace pdr_search
         }
 
         return SearchStatus::FAILED;
+    }
+
+    LiteralSet PDRSearch::from_state(const State &s) const
+    {
+        s.unpack();
+
+        int i = 0;
+        std::set<Literal> result;
+        for (auto value : s.get_unpacked_values())
+        {
+            i += 1;
+            Literal v = Literal(i, value);
+            result.insert(result.begin(), v);
+        }
+        LiteralSet c = LiteralSet(result, false);
+
+        // TODO: insert negated litrals
+        auto vars = this->task_proxy.get_variables();
+        int variable_index = 0;
+        for (auto var : vars)
+        {
+            int dom_size = var.get_domain_size();
+            for (int i = 0; i < dom_size; i++)
+            {
+                Literal l = Literal(variable_index, i);
+                if (!c.contains_literal(l))
+                {
+                    c.add_literal(l.invert());
+                }
+            }
+            variable_index += 1;
+        }
+        return c;
     }
 
     void add_options_to_parser(OptionParser &parser)

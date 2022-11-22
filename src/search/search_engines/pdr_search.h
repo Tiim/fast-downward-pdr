@@ -39,13 +39,14 @@ namespace pdr_search
     class LiteralSet
     {
     private:
-        bool clause = true;    
+        const bool clause = true;    
         std::set<Literal> literals;
 
     public:
         LiteralSet();
         LiteralSet(Literal v);
         LiteralSet(int variable, int value);
+        LiteralSet(std::set<Literal> init_literals, bool is_clause);
         bool operator<(const LiteralSet &b) const;
         std::set<Literal> get_literals() const;
         
@@ -71,10 +72,6 @@ namespace pdr_search
         // TODO: does this depend on if both sets are clauses or cubes?
         bool models(LiteralSet s) const;
 
-
-        // Coverts a state to a literal set as a cube
-        // Same as the Lits(s) function in the paper
-        static LiteralSet from_state(const State &s);
     };
 
     class Obligation
@@ -93,12 +90,13 @@ namespace pdr_search
     class Layer
     {
     private:
+        const PDRSearch *search_task;
         std::set<LiteralSet> clauses;
 
     public:
-        Layer();
-        Layer(const Layer &l);
-        Layer(const std::set<LiteralSet> clauses);
+        Layer(const PDRSearch *search_task);
+        Layer(const PDRSearch *search_task, const Layer &l);
+        Layer(const PDRSearch *search_task, const std::set<LiteralSet> clauses);
         size_t size() const;
         const std::set<LiteralSet> get_clauses() const;
 
@@ -133,8 +131,11 @@ namespace pdr_search
 
         LiteralSet extend(State s, Layer L);
 
-
         void dump_search_space() const;
+
+        // Coverts a state to a literal set as a cube
+        // Same as the Lits(s) function in the paper
+        LiteralSet from_state(const State &s) const;
     };
 
     extern void add_options_to_parser(options::OptionParser &parser);
