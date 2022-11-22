@@ -58,6 +58,11 @@ namespace pdr_search
         literals.insert(literals.begin(), Literal(variable, value));
     }
 
+    LiteralSet LiteralSet::operator=(const LiteralSet &s) const
+    {
+        return LiteralSet(s.literals, s.clause);
+    }
+
     bool LiteralSet::operator<(const LiteralSet &b) const
     {
         if (!(literals < b.literals) && !(b.literals < literals))
@@ -140,11 +145,90 @@ namespace pdr_search
         return true;
     }
 
-    bool LiteralSet::models(LiteralSet s) const
+    LiteralSet LiteralSet::set_union(const LiteralSet &s) const
     {
-        for (Literal l : s.get_literals())
+        assert(clause == s.clause);
+        LiteralSet tmp = LiteralSet(literals, clause);
+        for (auto l : s.literals)
         {
-            if (contains_literal(l.invert()))
+            tmp.add_literal(l);
+        }
+        return tmp;
+    }
+
+    LiteralSet LiteralSet::set_intersect(const LiteralSet &s) const
+    {
+        assert(clause == s.clause);
+        std::set<Literal> output_set;
+        std::set_intersection(
+            literals.begin(), literals.end(),
+            s.literals.begin(), s.literals.end(),
+            output_set.begin());
+        return LiteralSet(output_set, clause);
+    }
+
+    bool LiteralSet::models(const LiteralSet &s) const
+    {
+        // TODO:
+        if (is_cube())
+        {
+            if (s.is_cube())
+            {
+                // a ∧ b ⊧ a
+                // a ∧ b ⊧ a ∧ b
+                // all symbols on the right side must also be available
+                // on the left side
+                for (auto l : s.get_literals())
+                {
+                    if (!contains_literal(l))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            else
+            {
+                // a ∧ b ⊧ a
+                // a ∧ b ⊧ a ∨ b
+                // a ∧ b ⊧ a ∨ b ∨ c
+                // one symbol on the right must also be on the left side
+                for (auto l : s.get_literals())
+                {
+                    if (contains_literal(l))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+        else
+        {
+            if (s.is_cube())
+            {
+            }
+            else
+            {
+                // a ∨ b ⊧ a ∨ b ∨ c
+                // all on the left side must be on the right side
+                for (auto l : get_literals())
+                {
+                    if (!s.contains_literal(l))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+    }
+
+    bool LiteralSet::models(const Layer &l) const
+    {
+        for (auto c : l.get_clauses())
+        {
+            if (!models(c))
             {
                 return false;
             }
@@ -152,8 +236,9 @@ namespace pdr_search
         return true;
     }
 
-    Obligation::Obligation(State s, int p) : state(s), priority(p)
+    Obligation::Obligation(LiteralSet s, int p) : state(s), priority(p)
     {
+        assert(s.is_cube());
     }
 
     int Obligation::get_priority() const
@@ -161,7 +246,7 @@ namespace pdr_search
         return priority;
     }
 
-    State Obligation::get_state() const
+    LiteralSet Obligation::get_state() const
     {
         return state;
     }
@@ -172,17 +257,17 @@ namespace pdr_search
         return priority > o.priority;
     }
 
-    Layer::Layer(const PDRSearch *search) : search_task(search)
+    Layer::Layer()
     {
         this->clauses = std::set<LiteralSet>();
     }
 
-    Layer::Layer(const PDRSearch *search, const Layer &l) : search_task(search)
+    Layer::Layer(const Layer &l)
     {
         this->clauses = std::set<LiteralSet>(l.clauses);
     }
 
-    Layer::Layer(const PDRSearch *search, const std::set<LiteralSet> c) : clauses(c), search_task(search)
+    Layer::Layer(const std::set<LiteralSet> c) : clauses(c)
     {
         for (LiteralSet ls : c)
         {
@@ -243,7 +328,7 @@ namespace pdr_search
             l->clauses.begin(), l->clauses.end(),
             inserter(result, result.end()));
 
-        Layer lnew = Layer(this->search_task);
+        Layer lnew = Layer();
         for (auto clause : result)
         {
             lnew.add_clause(clause);
@@ -251,9 +336,9 @@ namespace pdr_search
         return lnew;
     }
 
-    bool Layer::modeled_by(State s)
+    bool Layer::modeled_by(LiteralSet s)
     {
-        for (Literal v : this->search_task->from_state(s).get_literals())
+        for (Literal v : s.get_literals())
         {
             if (contains_clause(LiteralSet(v.invert())))
             {
@@ -263,18 +348,16 @@ namespace pdr_search
         return true;
     }
 
-    LiteralSet PDRSearch::extend(State state, Layer L)
+    std::pair<LiteralSet, bool> PDRSearch::extend(LiteralSet s, Layer L)
     {
         auto A = this->task_proxy.get_operators();
-
-        LiteralSet s = this->from_state(state);
         //  Pseudocode 3
 
         // line 2
-        Layer Ls = Layer(this);
-        Layer Rnoop = Layer(this);
+        Layer Ls = Layer();
+        Layer Rnoop = Layer();
 
-        std::vector<Layer> Reasons;
+        std::set<Layer> Reasons;
         for (LiteralSet c : L.get_clauses())
         {
             if (!s.models(c))
@@ -301,6 +384,12 @@ namespace pdr_search
                     pre_sa.add_literal(l);
                 }
             }
+            LiteralSet eff_a;
+            for (auto eff_proxy : a.get_effects())
+            {
+                Literal l = Literal::from_fact(eff_proxy.get_fact());
+                eff_a.add_literal(l);
+            }
             // line 9
             LiteralSet t = LiteralSet(s);
             for (auto effect : a.get_effects())
@@ -310,7 +399,7 @@ namespace pdr_search
             }
 
             // line 10
-            Layer Lt = Layer(this);
+            Layer Lt = Layer();
             for (LiteralSet c : L.get_clauses())
             {
                 if (!t.models(c))
@@ -322,7 +411,7 @@ namespace pdr_search
             // line 11 & 12
             if (pre_sa.size() == 0 && Lt.size() == 0)
             {
-                return t;
+                return std::pair<LiteralSet, bool>(t, true);
             }
             // line 13 & 14
             else if (Ls.is_subset_eq_of(Lt))
@@ -333,42 +422,91 @@ namespace pdr_search
             else
             {
                 // line 16
-                // QUESTION: the arrow should be pointing left right?
+                // Comment: In the pseudocode, the arrow should be pointing left.
+                Layer Lt0 = Layer();
+                for (auto c : Lt.get_clauses())
+                {
+                    if (c.set_intersect(pre_sa).size() == 0)
+                    {
+                        Lt0.add_clause(c);
+                    }
+                }
+                // line 17
+                Layer R_a = Layer();
+                for (auto l : pre_sa.get_literals())
+                {
+                    R_a.add_clause(LiteralSet(l.invert()));
+                }
+                for (auto c : Lt0.get_clauses())
+                {
+                    for (auto l : c.get_literals())
+                    {
+                        if (!eff_a.contains_literal(l.invert()))
+                        {
+                            R_a.add_clause(LiteralSet(l));
+                        }
+                    }
+                }
+                // line 18
+                Reasons.insert(R_a);
             }
         }
 
-        //  Pseudocode 4
+        // line 20
+        LiteralSet r = LiteralSet();
+        // line 21
+        std::vector<Layer> R = std::vector<Layer>(Reasons.begin(), Reasons.end());
+        std::sort(R.begin(), R.end(), [](const Layer &f, const Layer &l)
+                  { return f.size() > l.size(); });
+        for (auto Ra : R)
+        {
+            // line 22
+            LiteralSet ra;
+            for (auto ra_cur : Ra.get_clauses())
+            {
+                if (ra.size() == 0 || ra.size() > r.set_union(ra_cur).size())
+                {
+                    ra = ra_cur;
+                }
+            }
+            r = r.set_union(ra);
+        }
+
+        // line 25 - 27 optional
+
+        // line 29
+        return std::pair<LiteralSet, bool>(r, false);
     }
 
     PDRSearch::PDRSearch(const Options &opts) : SearchEngine(opts)
     {
     }
 
-    Layer PDRSearch::get_layer(int i)
+    Layer *PDRSearch::get_layer(int i)
     {
         if (layers.size() > i)
         {
-            return layers[i];
+            return &layers[i];
         }
         else if (i == 0)
         {
-            Layer l0 = Layer(this);
+            Layer l0 = Layer();
             auto g = this->task_proxy.get_goals();
             for (size_t i = 0; i < g.size(); i++)
             {
                 l0.add_clause(LiteralSet(Literal::from_fact(g[i])));
             }
             this->layers.insert(this->layers.begin(), l0);
-            return l0;
+            return &layers[i];
         }
         else
         {
-            Layer l_i = Layer(this);
+            Layer l_i = Layer();
             this->layers.insert(this->layers.begin(), l_i);
 
             // TODO: initialize layer with heuristic here
 
-            return l_i;
+            return &layers[i];
         }
     }
 
@@ -391,8 +529,9 @@ namespace pdr_search
         iteration += 1;
 
         // line 5
-        auto s_i = this->task_proxy.get_initial_state();
-        if (get_layer(k).modeled_by(s_i))
+        auto initial_state = this->task_proxy.get_initial_state();
+        auto s_i = from_state(initial_state);
+        if (get_layer(k)->modeled_by(s_i))
         {
             // line 6
             std::priority_queue<Obligation> Q;
@@ -405,9 +544,10 @@ namespace pdr_search
                 // line 8
                 Obligation si = Q.top();
                 Q.pop();
-
+                int i = si.get_priority();
+                auto s = si.get_state();
                 // line 9
-                if (si.get_priority() == 0)
+                if (i == 0)
                 {
                     // line 10
                     return SearchStatus::SOLVED;
@@ -415,25 +555,81 @@ namespace pdr_search
 
                 // line 11 TODO
                 // if extend(s, L_i-1) returns a successor state t
-                State *t = nullptr;
-
-                // line 12
-                Q.push(si);
-                Q.push(Obligation(*t, si.get_priority() - 1));
-
-                // line 13 TOOD
-                // else
-                LiteralSet r;
-
-                for (int j = 0; j <= si.get_priority(); j++)
+                auto extended = extend(s, *get_layer(i - 1));
+                if (extended.second)
                 {
+                    // extend returns a successor state t
+                    LiteralSet t = extended.first;
+                    // line 12
+                    Q.push(si);
+                    Q.push(Obligation(t, si.get_priority() - 1));
                 }
+                else
+                {
+                    // line 14 extend returns a reason r
+                    LiteralSet r = extended.first;
+                    // line 15
+                    for (int j = 0; j <= i; j++)
+                    {
+                        auto L_j = get_layer(j);
+                        L_j->add_clause(r.invert());
+                    }
 
-                // line 14
+                    // line 18
+                    if (i < k)
+                    {
+                        // line 19
+                        Q.push(Obligation(s, i + 1));
+                    }
+                }
             }
         }
 
-        return SearchStatus::FAILED;
+        // Clause propagation
+        auto A = this->task_proxy.get_operators();
+
+        // line 22
+        for (int i = 0; i <= k + 1; i++)
+        {
+            // line 23
+            for (auto c : get_layer(i - 1)->set_minus(*get_layer(i)).get_clauses())
+            {
+                // line 25
+                auto s_c_temp = c.invert();
+                auto s_c = LiteralSet(s_c_temp.get_literals(), false);
+                // line 26
+                bool models = true;
+                for (auto a : A)
+                {
+                    LiteralSet pre_a = LiteralSet(std::set<Literal>(), false);
+                    for (auto prec : a.get_preconditions())
+                    {
+                        pre_a.add_literal(Literal::from_fact(prec));
+                    }
+                    LiteralSet applied = LiteralSet(s_c);
+                    for (auto a_i : a.get_effects())
+                    {
+                        applied.apply_literal(Literal::from_fact(a_i.get_fact()));
+                    }
+                    if (s_c.models(pre_a) && applied.models(*get_layer(i - 1)))
+                    {
+                        models = false;
+                        break;
+                    }
+                }
+                if (models)
+                {
+                    // line 27
+                    get_layer(i)->add_clause(c);
+                }
+            }
+            if (*get_layer(i - 1) == *get_layer(i))
+            {
+                return SearchStatus::FAILED;
+            }
+        }
+
+        return SearchStatus::IN_PROGRESS;
     }
 
     LiteralSet PDRSearch::from_state(const State &s) const
