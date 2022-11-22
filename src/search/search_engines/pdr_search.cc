@@ -13,6 +13,9 @@
 #include <iostream>
 #include <vector>
 
+
+// TODO: per improvements unordered sets
+
 namespace pdr_search
 {
     Literal::Literal(int var, int val) : variable(var), value(val)
@@ -159,6 +162,7 @@ namespace pdr_search
             Literal v = Literal(i, value);
             result.insert(result.begin(), v);
         }
+        // TODO: insert negated litrals
         LiteralSet c = LiteralSet();
         c.literals = result;
         c.clause = false;
