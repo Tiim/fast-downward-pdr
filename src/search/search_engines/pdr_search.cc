@@ -516,6 +516,7 @@ namespace pdr_search
 
         if (layers.size() > i)
         {
+            std::cout << "L_" << i<<": " << layers[i] << std::endl;
             return &layers[i];
         }
         else if (i == 0)
@@ -527,6 +528,7 @@ namespace pdr_search
                 l0.add_clause(LiteralSet(Literal::from_fact(g[i])));
             }
             this->layers.insert(this->layers.begin(), l0);
+            std::cout << "L_" << i << ": " << layers[i] << std::endl;
             return &layers[i];
         }
         else
@@ -535,14 +537,14 @@ namespace pdr_search
             this->layers.insert(this->layers.begin(), l_i);
 
             // TODO: initialize layer with heuristic here
-
+            std::cout << "L_" << i << ": " << layers[i] << std::endl;
             return &layers[i];
         }
     }
 
     void PDRSearch::initialize()
     {
-        get_layer(0);
+        auto L0 = *get_layer(0);
     }
 
     void PDRSearch::print_statistics() const
