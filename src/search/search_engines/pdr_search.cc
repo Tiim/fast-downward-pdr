@@ -46,6 +46,11 @@ namespace pdr_search
         }
         return variable < b.variable;
     }
+    std::ostream &operator<<(std::ostream &os, const Literal &l)
+    {
+        os << "(" << (l.positive ? "" : "¬") << l.variable << "," << l.value << ")";
+        return os;
+    }
 
     Literal Literal::invert() const
     {
@@ -93,6 +98,25 @@ namespace pdr_search
             return clause < b.clause;
         }
         return literals < b.literals;
+    }
+    std::ostream &operator<<(std::ostream &os, const LiteralSet &ls)
+    {
+        os << "LiteralSet: {";
+        bool first = true;
+        for(auto c : ls.get_literals())
+        {
+            if (!first && !ls.clause)
+            {
+                os << " ∧ ";
+            } else if (!first && ls.clause)
+            {
+                os << " ∨ ";
+            }
+            first = false;
+            os << c;
+        }
+        os << "} ";
+        return os;
     }
 
     std::set<Literal> LiteralSet::get_literals() const
@@ -233,6 +257,11 @@ namespace pdr_search
     {
         return Obligation(o);
     }
+    std::ostream &operator<<(std::ostream &os, const Obligation &o)
+    {
+        os << "Ob("<< o.state << "," << o.priority << ")";
+        return os;
+    }
 
     int Obligation::get_priority() const
     {
@@ -274,6 +303,17 @@ namespace pdr_search
     bool Layer::operator<(const Layer &l) const
     {
         return clauses < l.clauses;
+    }
+    std::ostream &operator<<(std::ostream &os, const Layer &l)
+    {
+        os << "Layer{";
+        for (auto c : l.clauses)
+        {
+            os << c;
+        }
+        os << "}";
+        //os << "Layer: {" << c.clauses << "}";
+        return os;
     }
 
     size_t Layer::size() const
@@ -472,6 +512,8 @@ namespace pdr_search
 
     Layer *PDRSearch::get_layer(long unsigned int i)
     {
+        assert(i <= layers.size() + 1);
+
         if (layers.size() > i)
         {
             return &layers[i];
@@ -514,7 +556,7 @@ namespace pdr_search
         std::cout << "------------------" << std::endl;
         std::cout << "Step " << iteration << " of PDR search" << std::endl;
         // line 3
-        int k = iteration;
+        const int k = iteration;
         iteration += 1;
 
         // line 5
@@ -578,10 +620,12 @@ namespace pdr_search
         auto A = this->task_proxy.get_operators();
 
         // line 22
-        for (int i = 0; i <= k + 1; i++)
+        for (int i = 1; i <= k + 1; i++)
         {
             // line 23
-            for (auto c : get_layer(i - 1)->set_minus(*get_layer(i)).get_clauses())
+            auto Li1 = *get_layer(i-1);
+            auto Li = *get_layer(i);
+            for (auto c : Li1.set_minus(Li).get_clauses())
             {
                 // line 25
                 auto s_c_temp = c.invert();

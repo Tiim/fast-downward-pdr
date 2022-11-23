@@ -37,6 +37,7 @@ namespace pdr_search
         Literal operator=(const Literal &l) const;
         bool operator==(const Literal &l) const;
         bool operator<(const Literal &b) const;
+        friend std::ostream &operator<<(std::ostream &os, const Literal &l);
         Literal invert() const;
         static Literal from_fact(FactProxy fp);
     };
@@ -58,6 +59,7 @@ namespace pdr_search
         LiteralSet operator=(const LiteralSet &s) const;
         bool operator==(const LiteralSet &s) const;
         bool operator<(const LiteralSet &s) const;
+        friend std::ostream &operator<<(std::ostream &os, const LiteralSet &ls);
         std::set<Literal> get_literals() const;
 
         LiteralSet invert() const;
@@ -95,6 +97,7 @@ namespace pdr_search
         Obligation(LiteralSet s, int priority);
         Obligation(const Obligation &o);
         Obligation operator=(const Obligation &o) const;
+        friend std::ostream &operator<<(std::ostream &os, const Obligation &o);
         int get_priority() const;
         LiteralSet get_state() const;
         bool operator<(const Obligation &o) const;
@@ -111,6 +114,7 @@ namespace pdr_search
         Layer(const std::set<LiteralSet> clauses);
         bool operator==(const Layer &l) const;
         bool operator<(const Layer &l) const;
+        friend std::ostream &operator<<(std::ostream &os, const Layer &l);
         size_t size() const;
         const std::set<LiteralSet> get_clauses() const;
 
