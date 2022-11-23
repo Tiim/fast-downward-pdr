@@ -18,6 +18,10 @@ namespace options
 
 namespace pdr_search
 {
+    class Literal;
+    class LiteralSet;
+    class Obligation;
+    class Layer;
 
     class Literal
     {
@@ -29,6 +33,9 @@ namespace pdr_search
     public:
         Literal(int variable, int value);
         Literal(int variable, int value, bool positive);
+        Literal(const Literal &l);
+        Literal operator=(const Literal &l) const;
+        bool operator==(const Literal &l) const;
         bool operator<(const Literal &b) const;
         Literal invert() const;
         static Literal from_fact(FactProxy fp);
@@ -40,17 +47,19 @@ namespace pdr_search
     class LiteralSet
     {
     private:
-        const bool clause = true;    
+        const bool clause = true;
         std::set<Literal> literals;
 
     public:
         LiteralSet();
         LiteralSet(Literal v);
+        LiteralSet(const LiteralSet &s);
         LiteralSet(std::set<Literal> init_literals, bool is_clause);
         LiteralSet operator=(const LiteralSet &s) const;
-        bool operator<(const LiteralSet &b) const;
+        bool operator==(const LiteralSet &s) const;
+        bool operator<(const LiteralSet &s) const;
         std::set<Literal> get_literals() const;
-        
+
         LiteralSet invert() const;
         size_t size() const;
         bool is_unit() const;
@@ -64,7 +73,7 @@ namespace pdr_search
         bool contains_literal(Literal l) const;
         bool is_subset_eq_of(const LiteralSet &ls) const;
         LiteralSet set_union(const LiteralSet &s) const;
-        LiteralSet set_intersect(const LiteralSet &s)const;
+        LiteralSet set_intersect(const LiteralSet &s) const;
 
         // Returns true if this LiteralSet is a model
         // of s.
@@ -74,7 +83,6 @@ namespace pdr_search
         bool models(const LiteralSet &c) const;
         // returns true if this literal set models every clause in the layer
         bool models(const Layer &l) const;
-
     };
 
     class Obligation
@@ -85,6 +93,8 @@ namespace pdr_search
 
     public:
         Obligation(LiteralSet s, int priority);
+        Obligation(const Obligation &o);
+        Obligation operator=(const Obligation &o) const;
         int get_priority() const;
         LiteralSet get_state() const;
         bool operator<(const Obligation &o) const;
@@ -100,6 +110,7 @@ namespace pdr_search
         Layer(const Layer &l);
         Layer(const std::set<LiteralSet> clauses);
         bool operator==(const Layer &l) const;
+        bool operator<(const Layer &l) const;
         size_t size() const;
         const std::set<LiteralSet> get_clauses() const;
 
@@ -118,11 +129,12 @@ namespace pdr_search
         std::vector<Layer> layers;
         int iteration = 0;
 
-        Layer* get_layer(int i);
+        Layer *get_layer(long unsigned int i);
 
         // Returns (t, true) where t is successor state
         // or (r, false) where r is reason
         std::pair<LiteralSet, bool> extend(LiteralSet s, Layer L);
+
     protected:
         virtual void initialize() override;
         virtual SearchStatus step() override;
@@ -132,7 +144,6 @@ namespace pdr_search
         ~PDRSearch() = default;
 
         virtual void print_statistics() const override;
-
 
         void dump_search_space() const;
 

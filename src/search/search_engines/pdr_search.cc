@@ -23,17 +23,28 @@ namespace pdr_search
     Literal::Literal(int var, int val, bool pos) : variable(var), value(val), positive(pos)
     {
     }
-    bool Literal::operator<(const Literal &o) const
+    Literal::Literal(const Literal &l) : variable(l.variable), value(l.value), positive(l.positive)
     {
-        if (variable == o.variable)
+    }
+    Literal Literal::operator=(const Literal &l) const
+    {
+        return Literal(l);
+    }
+    bool Literal::operator==(const Literal &l) const
+    {
+        return (variable == l.variable) && (value == l.value) && (positive == l.positive);
+    }
+    bool Literal::operator<(const Literal &b) const
+    {
+        if (variable == b.variable)
         {
-            if (value == o.value)
+            if (value == b.value)
             {
-                return positive < o.positive;
+                return positive < b.positive;
             }
-            return value < o.value;
+            return value < b.value;
         }
-        return variable < o.variable;
+        return variable < b.variable;
     }
 
     Literal Literal::invert() const
@@ -54,15 +65,27 @@ namespace pdr_search
     {
         literals.insert(v);
     }
-    LiteralSet::LiteralSet(std::set<Literal> init_literals, bool is_clause) : literals(init_literals), clause(is_clause)
+    LiteralSet::LiteralSet(const LiteralSet &s) : clause(s.clause), literals(s.literals)
+    {
+    }
+
+    LiteralSet::LiteralSet(std::set<Literal> init_literals, bool is_clause) : clause(is_clause), literals(init_literals)
     {
     }
 
     LiteralSet LiteralSet::operator=(const LiteralSet &s) const
     {
-        return LiteralSet(s);
+        return LiteralSet(s.literals, s.clause);
     }
 
+    bool LiteralSet::operator==(const LiteralSet &s) const
+    {
+        if (clause == s.clause)
+        {
+            return literals == s.literals;
+        }
+        return false;
+    }
     bool LiteralSet::operator<(const LiteralSet &b) const
     {
         if (!(literals < b.literals) && !(b.literals < literals))
@@ -84,8 +107,7 @@ namespace pdr_search
         {
             new_set.insert(l.invert());
         }
-        LiteralSet literal_set = LiteralSet(new_set, !clause);
-        return literal_set;
+        return LiteralSet(new_set, !clause);
     }
 
     size_t LiteralSet::size() const
@@ -181,7 +203,9 @@ namespace pdr_search
                 }
             }
             return false;
-        } else {
+        }
+        else
+        {
             return is_subset_eq_of(c);
         }
     }
@@ -201,6 +225,13 @@ namespace pdr_search
     Obligation::Obligation(LiteralSet s, int p) : state(s), priority(p)
     {
         assert(s.is_cube());
+    }
+    Obligation::Obligation(const Obligation &o) : state(o.state), priority(o.priority)
+    {
+    }
+    Obligation Obligation::operator=(const Obligation &o) const
+    {
+        return Obligation(o);
     }
 
     int Obligation::get_priority() const
@@ -235,6 +266,14 @@ namespace pdr_search
             assert(ls.is_clause());
             assert(ls.is_unit());
         }
+    }
+    bool Layer::operator==(const Layer &l) const
+    {
+        return clauses == l.clauses;
+    }
+    bool Layer::operator<(const Layer &l) const
+    {
+        return clauses < l.clauses;
     }
 
     size_t Layer::size() const
@@ -431,7 +470,7 @@ namespace pdr_search
     {
     }
 
-    Layer *PDRSearch::get_layer(int i)
+    Layer *PDRSearch::get_layer(long unsigned int i)
     {
         if (layers.size() > i)
         {
@@ -472,6 +511,7 @@ namespace pdr_search
 
     SearchStatus PDRSearch::step()
     {
+        std::cout << "------------------" << std::endl;
         std::cout << "Step " << iteration << " of PDR search" << std::endl;
         // line 3
         int k = iteration;
@@ -578,6 +618,7 @@ namespace pdr_search
             }
         }
 
+        std::cout << "------------------" << std::endl;
         return SearchStatus::IN_PROGRESS;
     }
 
