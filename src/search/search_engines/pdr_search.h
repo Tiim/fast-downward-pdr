@@ -24,10 +24,11 @@ namespace pdr_search
     private:
         const int variable;
         const int value;
-        bool positive = true;
+        const bool positive = true;
 
     public:
         Literal(int variable, int value);
+        Literal(int variable, int value, bool positive);
         bool operator<(const Literal &b) const;
         Literal invert() const;
         static Literal from_fact(FactProxy fp);
@@ -45,7 +46,6 @@ namespace pdr_search
     public:
         LiteralSet();
         LiteralSet(Literal v);
-        LiteralSet(int variable, int value);
         LiteralSet(std::set<Literal> init_literals, bool is_clause);
         LiteralSet operator=(const LiteralSet &s) const;
         bool operator<(const LiteralSet &b) const;
@@ -62,18 +62,16 @@ namespace pdr_search
         // Remove ¬l, add l
         void apply_literal(Literal l);
         bool contains_literal(Literal l) const;
-        bool is_subset_eq_of(LiteralSet ls) const;
+        bool is_subset_eq_of(const LiteralSet &ls) const;
         LiteralSet set_union(const LiteralSet &s) const;
         LiteralSet set_intersect(const LiteralSet &s)const;
 
         // Returns true if this LiteralSet is a model
         // of s.
-        // This means it will return false if for any literal l in
-        // s the inverse literal ¬l is element of this set.
         //
-        // Equivalent to the ⊧ (models) operator
-        // TODO: does this depend on if both sets are clauses or cubes?
-        bool models(const LiteralSet &s) const;
+        // should only be called for state s and clause c
+        // with "s ⊧ c".
+        bool models(const LiteralSet &c) const;
         // returns true if this literal set models every clause in the layer
         bool models(const Layer &l) const;
 
@@ -82,8 +80,8 @@ namespace pdr_search
     class Obligation
     {
     private:
-        LiteralSet state;
-        int priority;
+        const LiteralSet state;
+        const int priority;
 
     public:
         Obligation(LiteralSet s, int priority);
@@ -111,11 +109,8 @@ namespace pdr_search
         void remove_clause(LiteralSet c);
         bool contains_clause(LiteralSet c) const;
         bool is_subset_eq_of(Layer l) const;
-        Layer set_minus(const Layer &l) const;
-        
         // Lₜₕᵢₛ ∖ Lₗ
-        Layer without(Layer *l);
-        bool modeled_by(LiteralSet s);
+        Layer set_minus(const Layer &l) const;
     };
 
     class PDRSearch : public SearchEngine
@@ -125,6 +120,9 @@ namespace pdr_search
 
         Layer* get_layer(int i);
 
+        // Returns (t, true) where t is successor state
+        // or (r, false) where r is reason
+        std::pair<LiteralSet, bool> extend(LiteralSet s, Layer L);
     protected:
         virtual void initialize() override;
         virtual SearchStatus step() override;
@@ -135,9 +133,6 @@ namespace pdr_search
 
         virtual void print_statistics() const override;
 
-        // Returns (t, true) where t is successor state
-        // or (r, false) where r is reason
-        std::pair<LiteralSet, bool> extend(LiteralSet s, Layer L);
 
         void dump_search_space() const;
 
