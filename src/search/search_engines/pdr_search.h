@@ -21,6 +21,7 @@ namespace pdr_search
     class Literal;
     class LiteralSet;
     class Obligation;
+    class SetOfLiteralSets;
     class Layer;
 
     class Literal
@@ -104,25 +105,41 @@ namespace pdr_search
         bool operator<(const Obligation &o) const;
     };
 
-    class Layer
+    class SetOfLiteralSets
+    {
+    protected:
+        
+        const bool clauses;
+        std::set<LiteralSet> sets;
+
+    public:
+        SetOfLiteralSets();
+        SetOfLiteralSets(const SetOfLiteralSets &s);
+        SetOfLiteralSets(const std::set<LiteralSet> sets, bool clause);
+        virtual ~SetOfLiteralSets();
+        SetOfLiteralSets operator=(const SetOfLiteralSets &l) const;
+        bool operator==(const SetOfLiteralSets &s) const;
+        bool operator<(const SetOfLiteralSets &s) const;
+        friend std::ostream &operator<<(std::ostream &os, const SetOfLiteralSets &l);
+        size_t size() const;
+        const std::set<LiteralSet> get_sets() const;
+        virtual void add_set(LiteralSet s);
+        bool contains_set(LiteralSet s) const;
+        bool is_subset_eq_of(const SetOfLiteralSets &s) const;
+        SetOfLiteralSets set_minus(const SetOfLiteralSets &s) const;
+    };
+
+
+    class Layer : public SetOfLiteralSets
     {
     private:
-        std::set<LiteralSet> clauses;
-
     public:
         Layer();
         Layer(const Layer &l);
         Layer(const std::set<LiteralSet> clauses);
-        bool operator==(const Layer &l) const;
-        bool operator<(const Layer &l) const;
+        Layer operator=(const Layer &l) const;
         friend std::ostream &operator<<(std::ostream &os, const Layer &l);
-        size_t size() const;
-        const std::set<LiteralSet> get_clauses() const;
-
-        // L ← L ∪ {c}
-        void add_clause(LiteralSet c);
-        bool contains_clause(LiteralSet c) const;
-        bool is_subset_eq_of(Layer l) const;
+        void add_set(LiteralSet c);
         // Lₜₕᵢₛ ∖ Lₗ
         Layer set_minus(const Layer &l) const;
     };

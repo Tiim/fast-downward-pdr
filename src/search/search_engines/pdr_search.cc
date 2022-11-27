@@ -66,7 +66,7 @@ namespace pdr_search
     LiteralSet::LiteralSet()
     {
     }
-    LiteralSet::LiteralSet(bool c): clause(c) 
+    LiteralSet::LiteralSet(bool c) : clause(c)
     {
     }
     LiteralSet::LiteralSet(Literal v)
@@ -240,7 +240,7 @@ namespace pdr_search
 
     bool LiteralSet::models(const Layer &l) const
     {
-        for (auto c : l.get_clauses())
+        for (auto c : l.get_sets())
         {
             if (!models(c))
             {
@@ -283,16 +283,105 @@ namespace pdr_search
         return priority > o.priority;
     }
 
-    Layer::Layer()
+    SetOfLiteralSets::SetOfLiteralSets(): clauses(true)
+    {
+    }
+    SetOfLiteralSets::SetOfLiteralSets(const SetOfLiteralSets &s) : clauses(s.clauses)
+    {
+        this->sets = std::set<LiteralSet>(s.sets);
+    }
+    SetOfLiteralSets::SetOfLiteralSets(const std::set<LiteralSet> s, bool clause) : clauses(clause)
+    {
+        this->sets = std::set<LiteralSet>(s);
+        for (auto set : s)
+        {
+            assert(set.is_clause() == clause);
+        }
+    }
+    SetOfLiteralSets::~SetOfLiteralSets()
+    {
+    }
+    SetOfLiteralSets SetOfLiteralSets::operator=(const SetOfLiteralSets &s) const
+    {
+        return SetOfLiteralSets(s);
+    }
+
+    bool SetOfLiteralSets::operator==(const SetOfLiteralSets &s) const
+    {
+        return clauses == s.clauses && sets == s.sets;
+    }
+    bool SetOfLiteralSets::operator<(const SetOfLiteralSets &s) const
+    {
+        assert(clauses == s.clauses);
+        return sets < s.sets;
+    }
+    std::ostream &operator<<(std::ostream &os, const SetOfLiteralSets &s)
+    {
+        os << "SET{";
+        for (auto c : s.sets)
+        {
+            os << c;
+        }
+        os << "}";
+        return os;
+    }
+    size_t SetOfLiteralSets::size() const
+    {
+        return sets.size();
+    }
+    const std::set<LiteralSet> SetOfLiteralSets::get_sets() const
+    {
+        return sets;
+    }
+    void SetOfLiteralSets::add_set(LiteralSet c)
+    {
+        assert(c.is_clause() == clauses);
+        this->sets.insert(c);
+    }
+    bool SetOfLiteralSets::contains_set(LiteralSet c) const
+    {
+        auto res = this->sets.find(c);
+        return res != this->sets.end();
+    }
+    bool SetOfLiteralSets::is_subset_eq_of(const SetOfLiteralSets &s) const
+    {
+        if (this->size() > s.size())
+        {
+            return false;
+        }
+        for (LiteralSet c : this->sets)
+        {
+            if (!s.contains_set(c))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    SetOfLiteralSets SetOfLiteralSets::set_minus(const SetOfLiteralSets &l) const
+    {
+        std::set<LiteralSet> result;
+        set_difference(
+            this->sets.begin(), this->sets.end(),
+            l.sets.begin(), l.sets.end(),
+            inserter(result, result.end()));
+
+        Layer lnew = Layer();
+        for (auto clause : result)
+        {
+            lnew.add_set(clause);
+        }
+        return lnew;
+    }
+
+    Layer::Layer(): SetOfLiteralSets(std::set<LiteralSet>(), true)
     {
     }
 
-    Layer::Layer(const Layer &l)
+    Layer::Layer(const Layer &l): SetOfLiteralSets(l.sets, true)
     {
-        this->clauses = std::set<LiteralSet>(l.clauses);
     }
-
-    Layer::Layer(const std::set<LiteralSet> c) : clauses(c)
+    Layer::Layer(const std::set<LiteralSet> c): SetOfLiteralSets(c, true)
     {
         for (LiteralSet ls : c)
         {
@@ -300,18 +389,14 @@ namespace pdr_search
             assert(ls.is_unit());
         }
     }
-    bool Layer::operator==(const Layer &l) const
+    Layer Layer::operator=(const Layer &l) const
     {
-        return clauses == l.clauses;
-    }
-    bool Layer::operator<(const Layer &l) const
-    {
-        return clauses < l.clauses;
+        return Layer(l);
     }
     std::ostream &operator<<(std::ostream &os, const Layer &l)
     {
         os << "Layer{";
-        for (auto c : l.clauses)
+        for (auto c : l.sets)
         {
             os << c;
         }
@@ -320,60 +405,26 @@ namespace pdr_search
         return os;
     }
 
-    size_t Layer::size() const
+    void Layer::add_set(LiteralSet c)
     {
-        return clauses.size();
-    }
-
-    const std::set<LiteralSet> Layer::get_clauses() const
-    {
-        return clauses;
-    }
-
-    void Layer::add_clause(LiteralSet c)
-    {
-        assert(c.is_clause());
+        assert(c.is_clause() == clauses);
         assert(c.is_unit());
-        this->clauses.insert(c);
-    }
-
-    bool Layer::contains_clause(LiteralSet c) const
-    {
-        auto res = this->clauses.find(c);
-        return res != this->clauses.end();
-    }
-
-    bool Layer::is_subset_eq_of(Layer l) const
-    {
-        if (this->size() > l.size())
-        {
-            return false;
-        }
-        for (LiteralSet c : this->clauses)
-        {
-            if (!l.contains_clause(c))
-            {
-                return false;
-            }
-        }
-        return true;
+        this->sets.insert(c);
     }
 
     Layer Layer::set_minus(const Layer &l) const
     {
-        std::cout << "Set minus: " << *this << "\\" << l;
         std::set<LiteralSet> result;
         set_difference(
-            this->clauses.begin(), this->clauses.end(),
-            l.clauses.begin(), l.clauses.end(),
+            this->sets.begin(), this->sets.end(),
+            l.sets.begin(), l.sets.end(),
             inserter(result, result.end()));
 
         Layer lnew = Layer();
         for (auto clause : result)
         {
-            lnew.add_clause(clause);
+            lnew.add_set(clause);
         }
-        std::cout << " = " << lnew << std::endl;
         return lnew;
     }
 
@@ -385,16 +436,16 @@ namespace pdr_search
 
         // line 2
         Layer Ls = Layer();
-        std::set<LiteralSet> Rnoop;
+        SetOfLiteralSets Rnoop = SetOfLiteralSets(std::set<LiteralSet>(), false);
 
-        std::set<std::set<LiteralSet>> Reasons;
-        for (LiteralSet c : L.get_clauses())
+        std::set<SetOfLiteralSets> Reasons;
+        for (LiteralSet c : L.get_sets())
         {
             if (!s.models(c))
             {
-                Ls.add_clause(c);
+                Ls.add_set(c);
                 // line 3
-                Rnoop.insert(c.invert());
+                Rnoop.add_set(c.invert());
             }
         }
         // line 4
@@ -430,11 +481,11 @@ namespace pdr_search
 
             // line 10
             Layer Lt = Layer();
-            for (LiteralSet c : L.get_clauses())
+            for (LiteralSet c : L.get_sets())
             {
                 if (!t.models(c))
                 {
-                    Lt.add_clause(c);
+                    Lt.add_set(c);
                 }
             }
 
@@ -455,26 +506,26 @@ namespace pdr_search
                 // line 16
                 // Comment: In the pseudocode, the arrow should be pointing left.
                 Layer Lt0 = Layer();
-                for (auto c : Lt.get_clauses())
+                for (auto c : Lt.get_sets())
                 {
                     if (c.set_intersect(pre_sa).size() == 0)
                     {
-                        Lt0.add_clause(c);
+                        Lt0.add_set(c);
                     }
                 }
                 // line 17
-                std::set<LiteralSet> R_a;
+                SetOfLiteralSets R_a;
                 for (auto l : pre_sa.get_literals())
                 {
-                    R_a.insert(LiteralSet(l.invert()));
+                    R_a.add_set(LiteralSet(l.invert()));
                 }
-                for (auto c : Lt0.get_clauses())
+                for (auto c : Lt0.get_sets())
                 {
                     for (auto l : c.get_literals())
                     {
                         if (!eff_a.contains_literal(l.invert()))
                         {
-                            R_a.insert(LiteralSet(l));
+                            R_a.add_set(LiteralSet(l));
                         }
                     }
                 }
@@ -486,15 +537,15 @@ namespace pdr_search
         // line 20
         LiteralSet r = LiteralSet(false);
         // line 21
-        std::vector<std::set<LiteralSet>> R = std::vector<std::set<LiteralSet>>(Reasons.begin(), Reasons.end());
-        std::sort(R.begin(), R.end(), [](const std::set<LiteralSet> &f, const std::set<LiteralSet> &l)
+        std::vector<SetOfLiteralSets> R = std::vector<SetOfLiteralSets>(Reasons.begin(), Reasons.end());
+        std::sort(R.begin(), R.end(), [](const SetOfLiteralSets &f, const SetOfLiteralSets &l)
                   { return f.size() > l.size(); });
         std::cout << "e21: R = " << R << std::endl;
         for (auto Ra : R)
         {
             // line 22
             LiteralSet ra = LiteralSet(false);
-            for (auto ra_cur : Ra)
+            for (auto ra_cur : Ra.get_sets())
             {
                 if (ra.size() == 0 || ra.size() > r.set_union(ra_cur).size())
                 {
@@ -529,7 +580,7 @@ namespace pdr_search
             auto g = this->task_proxy.get_goals();
             for (size_t i = 0; i < g.size(); i++)
             {
-                l0.add_clause(LiteralSet(Literal::from_fact(g[i])));
+                l0.add_set(LiteralSet(Literal::from_fact(g[i])));
             }
             this->layers.insert(this->layers.end(), l0);
             return &layers[i];
@@ -614,7 +665,7 @@ namespace pdr_search
                     {
                         auto L_j = get_layer(j);
                         std::cout << "15: Push clause to L_" << j << ": c = " << r.invert() << std::endl;
-                        L_j->add_clause(r.invert());
+                        L_j->add_set(r.invert());
                     }
 
                     // line 18
@@ -638,7 +689,7 @@ namespace pdr_search
             // line 23
             auto Li1 = *get_layer(i - 1);
             auto Li = *get_layer(i);
-            for (auto c : Li1.set_minus(Li).get_clauses())
+            for (auto c : Li1.set_minus(Li).get_sets())
             {
                 std::cout << "23: foreach c in Li1 \\ Li: c = " << c << std::endl;
                 // line 25
@@ -670,7 +721,7 @@ namespace pdr_search
                 {
                     std::cout << "26: !models" << std::endl;
                     // line 27
-                    get_layer(i)->add_clause(c);
+                    get_layer(i)->add_set(c);
                     std::cout << "27: Push clause to L_" << i << ": c = " << c << ", L = " << *get_layer(i) << std::endl;
                 }
             }
