@@ -53,6 +53,7 @@ namespace pdr_search
 
     public:
         LiteralSet();
+        LiteralSet(bool c);
         LiteralSet(Literal v);
         LiteralSet(const LiteralSet &s);
         LiteralSet(std::set<Literal> init_literals, bool is_clause);

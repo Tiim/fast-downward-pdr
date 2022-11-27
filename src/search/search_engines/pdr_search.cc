@@ -48,7 +48,7 @@ namespace pdr_search
     }
     std::ostream &operator<<(std::ostream &os, const Literal &l)
     {
-        os << "(" << (l.positive ? "" : "¬") << l.variable << "," << l.value << ")";
+        os << (l.positive ? "" : "¬") << "(" << l.variable << "," << l.value << ")";
         return os;
     }
 
@@ -64,6 +64,9 @@ namespace pdr_search
     }
 
     LiteralSet::LiteralSet()
+    {
+    }
+    LiteralSet::LiteralSet(bool c): clause(c) 
     {
     }
     LiteralSet::LiteralSet(Literal v)
@@ -101,7 +104,7 @@ namespace pdr_search
     }
     std::ostream &operator<<(std::ostream &os, const LiteralSet &ls)
     {
-        os << "LiteralSet: {";
+        os << "LiteralSet{";
         bool first = true;
         for (auto c : ls.get_literals())
         {
@@ -376,28 +379,28 @@ namespace pdr_search
 
     std::pair<LiteralSet, bool> PDRSearch::extend(LiteralSet s, Layer L)
     {
-        std::cout << "Call to extend" << s << " " << L << std::endl;
+        std::cout << "e1: Call to extend " << s << " " << L << std::endl;
         auto A = this->task_proxy.get_operators();
         //  Pseudocode 3
 
         // line 2
         Layer Ls = Layer();
-        Layer Rnoop = Layer();
+        std::set<LiteralSet> Rnoop;
 
-        std::set<Layer> Reasons;
+        std::set<std::set<LiteralSet>> Reasons;
         for (LiteralSet c : L.get_clauses())
         {
             if (!s.models(c))
             {
                 Ls.add_clause(c);
                 // line 3
-                Rnoop.add_clause(c.invert());
+                Rnoop.insert(c.invert());
             }
         }
         // line 4
         assert(Rnoop.size() > 0);
         // line 5
-        Reasons.insert(Reasons.begin(), Rnoop);
+        Reasons.insert(Rnoop);
         // line 7
         for (auto a : A)
         {
@@ -438,7 +441,7 @@ namespace pdr_search
             // line 11 & 12
             if (pre_sa.size() == 0 && Lt.size() == 0)
             {
-                std::cout << "Successor t found: t = " << t << std::endl;
+                std::cout << "e12: Successor t found: t = " << t << std::endl;
                 return std::pair<LiteralSet, bool>(t, true);
             }
             // line 13 & 14
@@ -460,10 +463,10 @@ namespace pdr_search
                     }
                 }
                 // line 17
-                Layer R_a = Layer();
+                std::set<LiteralSet> R_a;
                 for (auto l : pre_sa.get_literals())
                 {
-                    R_a.add_clause(LiteralSet(l.invert()));
+                    R_a.insert(LiteralSet(l.invert()));
                 }
                 for (auto c : Lt0.get_clauses())
                 {
@@ -471,7 +474,7 @@ namespace pdr_search
                     {
                         if (!eff_a.contains_literal(l.invert()))
                         {
-                            R_a.add_clause(LiteralSet(l));
+                            R_a.insert(LiteralSet(l));
                         }
                     }
                 }
@@ -481,16 +484,17 @@ namespace pdr_search
         }
 
         // line 20
-        LiteralSet r = LiteralSet();
+        LiteralSet r = LiteralSet(false);
         // line 21
-        std::vector<Layer> R = std::vector<Layer>(Reasons.begin(), Reasons.end());
-        std::sort(R.begin(), R.end(), [](const Layer &f, const Layer &l)
+        std::vector<std::set<LiteralSet>> R = std::vector<std::set<LiteralSet>>(Reasons.begin(), Reasons.end());
+        std::sort(R.begin(), R.end(), [](const std::set<LiteralSet> &f, const std::set<LiteralSet> &l)
                   { return f.size() > l.size(); });
+        std::cout << "e21: R = " << R << std::endl;
         for (auto Ra : R)
         {
             // line 22
-            LiteralSet ra;
-            for (auto ra_cur : Ra.get_clauses())
+            LiteralSet ra = LiteralSet(false);
+            for (auto ra_cur : Ra)
             {
                 if (ra.size() == 0 || ra.size() > r.set_union(ra_cur).size())
                 {
@@ -503,7 +507,7 @@ namespace pdr_search
         // line 25 - 27 optional
 
         // line 29
-        std::cout << "No successor t found, reason: r = " << r << std::endl;
+        std::cout << "e29: No successor t found, reason: r = " << r << std::endl;
         return std::pair<LiteralSet, bool>(r, false);
     }
 
@@ -609,7 +613,7 @@ namespace pdr_search
                     for (int j = 0; j <= i; j++)
                     {
                         auto L_j = get_layer(j);
-                        std::cout << "Push clause to L_" << j << ": c = " << r.invert() << std::endl;
+                        std::cout << "15: Push clause to L_" << j << ": c = " << r.invert() << std::endl;
                         L_j->add_clause(r.invert());
                     }
 
