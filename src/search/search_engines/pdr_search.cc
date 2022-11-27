@@ -357,6 +357,7 @@ namespace pdr_search
 
     Layer Layer::set_minus(const Layer &l) const
     {
+        std::cout << "Set minus: " << *this << "\\" << l;
         std::set<LiteralSet> result;
         set_difference(
             this->clauses.begin(), this->clauses.end(),
@@ -368,11 +369,13 @@ namespace pdr_search
         {
             lnew.add_clause(clause);
         }
+        std::cout << " = " << lnew << std::endl;
         return lnew;
     }
 
     std::pair<LiteralSet, bool> PDRSearch::extend(LiteralSet s, Layer L)
     {
+        std::cout << "Call to extend" << s << " " << L << std::endl;
         auto A = this->task_proxy.get_operators();
         //  Pseudocode 3
 
@@ -434,6 +437,7 @@ namespace pdr_search
             // line 11 & 12
             if (pre_sa.size() == 0 && Lt.size() == 0)
             {
+                std::cout << "Successor t found: t = " << t << std::endl;
                 return std::pair<LiteralSet, bool>(t, true);
             }
             // line 13 & 14
@@ -498,6 +502,7 @@ namespace pdr_search
         // line 25 - 27 optional
 
         // line 29
+        std::cout << "No successor t found, reason: r = " << r << std::endl;
         return std::pair<LiteralSet, bool>(r, false);
     }
 
@@ -511,7 +516,6 @@ namespace pdr_search
 
         if (layers.size() > i)
         {
-            std::cout << "L_" << i<<": " << layers[i] << " (already existed)"<< std::endl;
             return &layers[i];
         }
         else if (i == 0)
@@ -523,7 +527,6 @@ namespace pdr_search
                 l0.add_clause(LiteralSet(Literal::from_fact(g[i])));
             }
             this->layers.insert(this->layers.end(), l0);
-            std::cout << "L0" << ": " << layers[i] << " (new layer)" << std::endl;
             return &layers[i];
         }
         else
@@ -532,7 +535,6 @@ namespace pdr_search
             this->layers.insert(this->layers.end(), l_i);
 
             // TODO: initialize layer with heuristic here
-            std::cout << "L_" << i << ": " << layers[i] << " (new layer)" << std::endl;
             return &layers[i];
         }
     }
@@ -556,12 +558,14 @@ namespace pdr_search
         const int k = iteration;
         iteration += 1;
 
+        std::cout << "4: Path construction" << std::endl;
         // line 5
         auto initial_state = this->task_proxy.get_initial_state();
         auto s_i = from_state(initial_state);
         if (s_i.models(*get_layer(k)))
         {
             // line 6
+            std::cout << "6: Initialize Q" << std::endl;
             std::priority_queue<Obligation> Q;
             Q.push(Obligation(s_i, k));
 
@@ -572,12 +576,14 @@ namespace pdr_search
                 // line 8
                 Obligation si = Q.top();
                 Q.pop();
+                std::cout << "8: Pop obligation from queue: " << si << std::endl;
                 int i = si.get_priority();
                 auto s = si.get_state();
                 // line 9
                 if (i == 0)
                 {
                     // line 10
+                    std::cout << "10: Path found" << std::endl;
                     return SearchStatus::SOLVED;
                 }
 
@@ -590,7 +596,9 @@ namespace pdr_search
                     LiteralSet t = extended.first;
                     // line 12
                     Q.push(si);
+                    std::cout << "12: Add obligation to queue: " << si << std::endl;
                     Q.push(Obligation(t, si.get_priority() - 1));
+                    std::cout << "12: Add obligation to queue: " << Obligation(t, si.get_priority() - 1) << std::endl;
                 }
                 else
                 {
@@ -600,6 +608,7 @@ namespace pdr_search
                     for (int j = 0; j <= i; j++)
                     {
                         auto L_j = get_layer(j);
+                        std::cout << "Push clause to L_" << j << ": c = " << r.invert() << std::endl;
                         L_j->add_clause(r.invert());
                     }
 
@@ -616,14 +625,17 @@ namespace pdr_search
         // Clause propagation
         auto A = this->task_proxy.get_operators();
 
+        std::cout << "22: Clause propagation" << std::endl;
         // line 22
         for (int i = 1; i <= k + 1; i++)
         {
+            std::cout << "22: foreach i = " << i << " of " << k + 1 << std::endl;
             // line 23
             auto Li1 = *get_layer(i-1);
             auto Li = *get_layer(i);
             for (auto c : Li1.set_minus(Li).get_clauses())
             {
+                std::cout << "23: foreach c in Li1 \\ Li: c = " << c <<std::endl;
                 // line 25
                 auto s_c_temp = c.invert();
                 auto s_c = LiteralSet(s_c_temp.get_literals(), false);
@@ -631,11 +643,13 @@ namespace pdr_search
                 bool models = true;
                 for (auto a : A)
                 {
+                    // build pre_a from preconditions
                     LiteralSet pre_a = LiteralSet(std::set<Literal>(), false);
                     for (auto prec : a.get_preconditions())
                     {
                         pre_a.add_literal(Literal::from_fact(prec));
                     }
+                    // build apply(s_c, a)
                     LiteralSet applied = LiteralSet(s_c);
                     for (auto a_i : a.get_effects())
                     {
@@ -649,12 +663,22 @@ namespace pdr_search
                 }
                 if (!models)
                 {
+                    std::cout<< "26: !models" << std::endl;
                     // line 27
                     get_layer(i)->add_clause(c);
+                    std::cout << "27: Push clause to L_" << i << ": c = " << c << ", L = " << *get_layer(i) << std::endl;
                 }
             }
+            std::cout << "29: L_" << i - 1 
+                << *get_layer(i - 1) 
+                << "== L_" << i 
+                << *get_layer(i) << ": -> " 
+                << (*get_layer(i - 1) == *get_layer(i)) 
+                << std::endl;
             if (*get_layer(i - 1) == *get_layer(i))
             {
+                // line 30
+                std::cout << "30: No plan possible" << std::endl;
                 return SearchStatus::FAILED;
             }
         }
