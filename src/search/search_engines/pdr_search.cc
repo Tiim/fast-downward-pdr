@@ -66,7 +66,7 @@ namespace pdr_search
     LiteralSet::LiteralSet(SetType type) : set_type(type)
     {
     }
-    LiteralSet::LiteralSet(Literal v, SetType type): set_type(type)
+    LiteralSet::LiteralSet(Literal v, SetType type) : set_type(type)
     {
         literals.insert(v);
     }
@@ -74,8 +74,7 @@ namespace pdr_search
     {
     }
 
-    LiteralSet::LiteralSet(std::set<Literal> init_literals, SetType type) : 
-        set_type(type), literals(init_literals)
+    LiteralSet::LiteralSet(std::set<Literal> init_literals, SetType type) : set_type(type), literals(init_literals)
     {
     }
 
@@ -125,6 +124,10 @@ namespace pdr_search
     {
         return literals;
     }
+    SetType LiteralSet::get_set_type() const
+    {
+        return set_type;
+    }
 
     LiteralSet LiteralSet::invert() const
     {
@@ -137,7 +140,9 @@ namespace pdr_search
         if (set_type == SetType::CLAUSE)
         {
             type = SetType::CUBE;
-        } else {
+        }
+        else
+        {
             type = SetType::CLAUSE;
         }
         return LiteralSet(new_set, type);
@@ -288,7 +293,7 @@ namespace pdr_search
         return priority > o.priority;
     }
 
-    SetOfLiteralSets::SetOfLiteralSets(SetType type): set_type(type)
+    SetOfLiteralSets::SetOfLiteralSets(SetType type) : set_type(type)
     {
     }
     SetOfLiteralSets::SetOfLiteralSets(const SetOfLiteralSets &s) : set_type(s.set_type)
@@ -460,7 +465,7 @@ namespace pdr_search
         // line 7
         for (auto a : A)
         {
-            LiteralSet pre_sa = SetType::CUBE;
+            LiteralSet pre_sa = SetType::CLAUSE;
             for (auto fact : a.get_preconditions())
             {
                 Literal l = Literal::from_fact(fact);
@@ -562,7 +567,9 @@ namespace pdr_search
 
         // line 25 - 27 optional
 
+
         // line 29
+        assert(r.size() > 0);
         std::cout << "e29: No successor t found, reason: r = " << r << std::endl;
         return std::pair<LiteralSet, bool>(r, false);
     }
@@ -585,7 +592,7 @@ namespace pdr_search
             auto g = this->task_proxy.get_goals();
             for (size_t i = 0; i < g.size(); i++)
             {
-                l0.add_set(LiteralSet(Literal::from_fact(g[i]), SetType::CUBE));
+                l0.add_set(LiteralSet(Literal::from_fact(g[i]), SetType::CLAUSE));
             }
             this->layers.insert(this->layers.end(), l0);
             return &layers[i];
