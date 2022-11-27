@@ -120,8 +120,6 @@ namespace pdr_search
 
         // L ← L ∪ {c}
         void add_clause(LiteralSet c);
-        // L ← L ∖ {c}
-        void remove_clause(LiteralSet c);
         bool contains_clause(LiteralSet c) const;
         bool is_subset_eq_of(Layer l) const;
         // Lₜₕᵢₛ ∖ Lₗ

@@ -333,11 +333,6 @@ namespace pdr_search
         this->clauses.insert(c);
     }
 
-    void Layer::remove_clause(LiteralSet c)
-    {
-        clauses.erase(c);
-    }
-
     bool Layer::contains_clause(LiteralSet c) const
     {
         auto res = this->clauses.find(c);
