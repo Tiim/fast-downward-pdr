@@ -672,13 +672,14 @@ namespace pdr_search
     {
         s.unpack();
 
+
         int i = 0;
         std::set<Literal> result;
         for (auto value : s.get_unpacked_values())
         {
-            i += 1;
             Literal v = Literal(i, value);
             result.insert(result.begin(), v);
+            i += 1;
         }
         LiteralSet c = LiteralSet(result, false);
 
