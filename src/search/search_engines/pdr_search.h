@@ -24,6 +24,11 @@ namespace pdr_search
     class SetOfLiteralSets;
     class Layer;
 
+    enum SetType {
+        CUBE,
+        CLAUSE,
+    };
+
     class Literal
     {
     private:
@@ -49,20 +54,20 @@ namespace pdr_search
     class LiteralSet
     {
     private:
-        const bool clause = true;
+        const SetType set_type;
         std::set<Literal> literals;
 
     public:
-        LiteralSet();
-        LiteralSet(bool c);
-        LiteralSet(Literal v);
+        LiteralSet(SetType type);
+        LiteralSet(Literal v, SetType type);
         LiteralSet(const LiteralSet &s);
-        LiteralSet(std::set<Literal> init_literals, bool is_clause);
+        LiteralSet(std::set<Literal> init_literals, SetType type);
         LiteralSet operator=(const LiteralSet &s) const;
         bool operator==(const LiteralSet &s) const;
         bool operator<(const LiteralSet &s) const;
         friend std::ostream &operator<<(std::ostream &os, const LiteralSet &ls);
         std::set<Literal> get_literals() const;
+        SetType get_set_type() const;
 
         LiteralSet invert() const;
         size_t size() const;
@@ -109,13 +114,13 @@ namespace pdr_search
     {
     protected:
         
-        const bool clauses;
+        const SetType set_type;
         std::set<LiteralSet> sets;
 
     public:
-        SetOfLiteralSets();
+        SetOfLiteralSets(SetType type);
         SetOfLiteralSets(const SetOfLiteralSets &s);
-        SetOfLiteralSets(const std::set<LiteralSet> sets, bool clause);
+        SetOfLiteralSets(const std::set<LiteralSet> sets, SetType type);
         virtual ~SetOfLiteralSets();
         SetOfLiteralSets operator=(const SetOfLiteralSets &l) const;
         bool operator==(const SetOfLiteralSets &s) const;

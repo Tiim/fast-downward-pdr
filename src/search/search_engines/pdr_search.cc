@@ -63,32 +63,30 @@ namespace pdr_search
         return Literal(factPair.var, factPair.value);
     }
 
-    LiteralSet::LiteralSet()
+    LiteralSet::LiteralSet(SetType type) : set_type(type)
     {
     }
-    LiteralSet::LiteralSet(bool c) : clause(c)
-    {
-    }
-    LiteralSet::LiteralSet(Literal v)
+    LiteralSet::LiteralSet(Literal v, SetType type): set_type(type)
     {
         literals.insert(v);
     }
-    LiteralSet::LiteralSet(const LiteralSet &s) : clause(s.clause), literals(s.literals)
+    LiteralSet::LiteralSet(const LiteralSet &s) : set_type(s.set_type), literals(s.literals)
     {
     }
 
-    LiteralSet::LiteralSet(std::set<Literal> init_literals, bool is_clause) : clause(is_clause), literals(init_literals)
+    LiteralSet::LiteralSet(std::set<Literal> init_literals, SetType type) : 
+        set_type(type), literals(init_literals)
     {
     }
 
     LiteralSet LiteralSet::operator=(const LiteralSet &s) const
     {
-        return LiteralSet(s.literals, s.clause);
+        return LiteralSet(s.literals, s.set_type);
     }
 
     bool LiteralSet::operator==(const LiteralSet &s) const
     {
-        if (clause == s.clause)
+        if (set_type == s.set_type)
         {
             return literals == s.literals;
         }
@@ -98,7 +96,7 @@ namespace pdr_search
     {
         if (!(literals < b.literals) && !(b.literals < literals))
         {
-            return clause < b.clause;
+            return set_type < b.set_type;
         }
         return literals < b.literals;
     }
@@ -108,11 +106,11 @@ namespace pdr_search
         bool first = true;
         for (auto c : ls.get_literals())
         {
-            if (!first && !ls.clause)
+            if (!first && ls.set_type == SetType::CUBE)
             {
                 os << " ∧ ";
             }
-            else if (!first && ls.clause)
+            else if (!first && ls.set_type == SetType::CLAUSE)
             {
                 os << " ∨ ";
             }
@@ -135,7 +133,14 @@ namespace pdr_search
         {
             new_set.insert(l.invert());
         }
-        return LiteralSet(new_set, !clause);
+        SetType type;
+        if (set_type == SetType::CLAUSE)
+        {
+            type = SetType::CUBE;
+        } else {
+            type = SetType::CLAUSE;
+        }
+        return LiteralSet(new_set, type);
     }
 
     size_t LiteralSet::size() const
@@ -150,12 +155,12 @@ namespace pdr_search
 
     bool LiteralSet::is_clause() const
     {
-        return clause;
+        return set_type == SetType::CLAUSE;
     }
 
     bool LiteralSet::is_cube() const
     {
-        return !clause;
+        return set_type == SetType::CUBE;
     }
 
     void LiteralSet::add_literal(Literal l)
@@ -181,7 +186,7 @@ namespace pdr_search
 
     bool LiteralSet::is_subset_eq_of(const LiteralSet &ls) const
     {
-        assert(clause == ls.clause);
+        assert(set_type == ls.set_type);
         if (size() > ls.size())
         {
             return false;
@@ -198,8 +203,8 @@ namespace pdr_search
 
     LiteralSet LiteralSet::set_union(const LiteralSet &s) const
     {
-        assert(clause == s.clause);
-        LiteralSet tmp = LiteralSet(literals, clause);
+        assert(set_type == s.set_type);
+        LiteralSet tmp = LiteralSet(literals, set_type);
         for (auto l : s.literals)
         {
             tmp.add_literal(l);
@@ -209,13 +214,13 @@ namespace pdr_search
 
     LiteralSet LiteralSet::set_intersect(const LiteralSet &s) const
     {
-        assert(clause == s.clause);
+        assert(set_type == s.set_type);
         std::set<Literal> output_set;
         std::set_intersection(
             literals.begin(), literals.end(),
             s.literals.begin(), s.literals.end(),
             output_set.begin());
-        return LiteralSet(output_set, clause);
+        return LiteralSet(output_set, set_type);
     }
 
     bool LiteralSet::models(const LiteralSet &c) const
@@ -283,19 +288,19 @@ namespace pdr_search
         return priority > o.priority;
     }
 
-    SetOfLiteralSets::SetOfLiteralSets(): clauses(true)
+    SetOfLiteralSets::SetOfLiteralSets(SetType type): set_type(type)
     {
     }
-    SetOfLiteralSets::SetOfLiteralSets(const SetOfLiteralSets &s) : clauses(s.clauses)
+    SetOfLiteralSets::SetOfLiteralSets(const SetOfLiteralSets &s) : set_type(s.set_type)
     {
         this->sets = std::set<LiteralSet>(s.sets);
     }
-    SetOfLiteralSets::SetOfLiteralSets(const std::set<LiteralSet> s, bool clause) : clauses(clause)
+    SetOfLiteralSets::SetOfLiteralSets(const std::set<LiteralSet> s, SetType type) : set_type(type)
     {
         this->sets = std::set<LiteralSet>(s);
         for (auto set : s)
         {
-            assert(set.is_clause() == clause);
+            assert(set.get_set_type() == type);
         }
     }
     SetOfLiteralSets::~SetOfLiteralSets()
@@ -308,11 +313,11 @@ namespace pdr_search
 
     bool SetOfLiteralSets::operator==(const SetOfLiteralSets &s) const
     {
-        return clauses == s.clauses && sets == s.sets;
+        return set_type == s.set_type && sets == s.sets;
     }
     bool SetOfLiteralSets::operator<(const SetOfLiteralSets &s) const
     {
-        assert(clauses == s.clauses);
+        assert(set_type == s.set_type);
         return sets < s.sets;
     }
     std::ostream &operator<<(std::ostream &os, const SetOfLiteralSets &s)
@@ -335,7 +340,7 @@ namespace pdr_search
     }
     void SetOfLiteralSets::add_set(LiteralSet c)
     {
-        assert(c.is_clause() == clauses);
+        assert(c.get_set_type() == set_type);
         this->sets.insert(c);
     }
     bool SetOfLiteralSets::contains_set(LiteralSet c) const
@@ -374,14 +379,14 @@ namespace pdr_search
         return lnew;
     }
 
-    Layer::Layer(): SetOfLiteralSets(std::set<LiteralSet>(), true)
+    Layer::Layer() : SetOfLiteralSets(std::set<LiteralSet>(), SetType::CLAUSE)
     {
     }
 
-    Layer::Layer(const Layer &l): SetOfLiteralSets(l.sets, true)
+    Layer::Layer(const Layer &l) : SetOfLiteralSets(l.sets, SetType::CLAUSE)
     {
     }
-    Layer::Layer(const std::set<LiteralSet> c): SetOfLiteralSets(c, true)
+    Layer::Layer(const std::set<LiteralSet> c) : SetOfLiteralSets(c, SetType::CLAUSE)
     {
         for (LiteralSet ls : c)
         {
@@ -407,7 +412,7 @@ namespace pdr_search
 
     void Layer::add_set(LiteralSet c)
     {
-        assert(c.is_clause() == clauses);
+        assert(c.is_clause());
         assert(c.is_unit());
         this->sets.insert(c);
     }
@@ -436,7 +441,7 @@ namespace pdr_search
 
         // line 2
         Layer Ls = Layer();
-        SetOfLiteralSets Rnoop = SetOfLiteralSets(std::set<LiteralSet>(), false);
+        SetOfLiteralSets Rnoop = SetOfLiteralSets(SetType::CUBE);
 
         std::set<SetOfLiteralSets> Reasons;
         for (LiteralSet c : L.get_sets())
@@ -455,17 +460,17 @@ namespace pdr_search
         // line 7
         for (auto a : A)
         {
-            LiteralSet pre_sa;
+            LiteralSet pre_sa = SetType::CUBE;
             for (auto fact : a.get_preconditions())
             {
                 Literal l = Literal::from_fact(fact);
                 // line 8
-                if (!s.models(LiteralSet(l)))
+                if (!s.models(LiteralSet(l, SetType::CUBE)))
                 {
                     pre_sa.add_literal(l);
                 }
             }
-            LiteralSet eff_a;
+            LiteralSet eff_a = SetType::CUBE;
             for (auto eff_proxy : a.get_effects())
             {
                 Literal l = Literal::from_fact(eff_proxy.get_fact());
@@ -514,10 +519,10 @@ namespace pdr_search
                     }
                 }
                 // line 17
-                SetOfLiteralSets R_a;
+                SetOfLiteralSets R_a = SetOfLiteralSets(SetType::CUBE);
                 for (auto l : pre_sa.get_literals())
                 {
-                    R_a.add_set(LiteralSet(l.invert()));
+                    R_a.add_set(LiteralSet(l.invert(), SetType::CUBE));
                 }
                 for (auto c : Lt0.get_sets())
                 {
@@ -525,7 +530,7 @@ namespace pdr_search
                     {
                         if (!eff_a.contains_literal(l.invert()))
                         {
-                            R_a.add_set(LiteralSet(l));
+                            R_a.add_set(LiteralSet(l, SetType::CUBE));
                         }
                     }
                 }
@@ -535,7 +540,7 @@ namespace pdr_search
         }
 
         // line 20
-        LiteralSet r = LiteralSet(false);
+        LiteralSet r = LiteralSet(SetType::CUBE);
         // line 21
         std::vector<SetOfLiteralSets> R = std::vector<SetOfLiteralSets>(Reasons.begin(), Reasons.end());
         std::sort(R.begin(), R.end(), [](const SetOfLiteralSets &f, const SetOfLiteralSets &l)
@@ -544,7 +549,7 @@ namespace pdr_search
         for (auto Ra : R)
         {
             // line 22
-            LiteralSet ra = LiteralSet(false);
+            LiteralSet ra = LiteralSet(SetType::CUBE);
             for (auto ra_cur : Ra.get_sets())
             {
                 if (ra.size() == 0 || ra.size() > r.set_union(ra_cur).size())
@@ -580,7 +585,7 @@ namespace pdr_search
             auto g = this->task_proxy.get_goals();
             for (size_t i = 0; i < g.size(); i++)
             {
-                l0.add_set(LiteralSet(Literal::from_fact(g[i])));
+                l0.add_set(LiteralSet(Literal::from_fact(g[i]), SetType::CUBE));
             }
             this->layers.insert(this->layers.end(), l0);
             return &layers[i];
@@ -694,13 +699,13 @@ namespace pdr_search
                 std::cout << "23: foreach c in Li1 \\ Li: c = " << c << std::endl;
                 // line 25
                 auto s_c_temp = c.invert();
-                auto s_c = LiteralSet(s_c_temp.get_literals(), false);
+                auto s_c = LiteralSet(s_c_temp.get_literals(), SetType::CUBE);
                 // line 26
                 bool models = true;
                 for (auto a : A)
                 {
                     // build pre_a from preconditions
-                    LiteralSet pre_a = LiteralSet(std::set<Literal>(), false);
+                    LiteralSet pre_a = LiteralSet(std::set<Literal>(), SetType::CUBE);
                     for (auto prec : a.get_preconditions())
                     {
                         pre_a.add_literal(Literal::from_fact(prec));
@@ -755,7 +760,7 @@ namespace pdr_search
             result.insert(result.begin(), v);
             i += 1;
         }
-        LiteralSet c = LiteralSet(result, false);
+        LiteralSet c = LiteralSet(result, SetType::CUBE);
 
         // TODO: insert negated litrals
         auto vars = this->task_proxy.get_variables();
