@@ -103,12 +103,13 @@ namespace pdr_search
     {
         os << "LiteralSet: {";
         bool first = true;
-        for(auto c : ls.get_literals())
+        for (auto c : ls.get_literals())
         {
             if (!first && !ls.clause)
             {
                 os << " ∧ ";
-            } else if (!first && ls.clause)
+            }
+            else if (!first && ls.clause)
             {
                 os << " ∨ ";
             }
@@ -259,7 +260,7 @@ namespace pdr_search
     }
     std::ostream &operator<<(std::ostream &os, const Obligation &o)
     {
-        os << "Ob("<< o.state << "," << o.priority << ")";
+        os << "Ob(" << o.state << "," << o.priority << ")";
         return os;
     }
 
@@ -312,7 +313,7 @@ namespace pdr_search
             os << c;
         }
         os << "}";
-        //os << "Layer: {" << c.clauses << "}";
+        // os << "Layer: {" << c.clauses << "}";
         return os;
     }
 
@@ -631,11 +632,11 @@ namespace pdr_search
         {
             std::cout << "22: foreach i = " << i << " of " << k + 1 << std::endl;
             // line 23
-            auto Li1 = *get_layer(i-1);
+            auto Li1 = *get_layer(i - 1);
             auto Li = *get_layer(i);
             for (auto c : Li1.set_minus(Li).get_clauses())
             {
-                std::cout << "23: foreach c in Li1 \\ Li: c = " << c <<std::endl;
+                std::cout << "23: foreach c in Li1 \\ Li: c = " << c << std::endl;
                 // line 25
                 auto s_c_temp = c.invert();
                 auto s_c = LiteralSet(s_c_temp.get_literals(), false);
@@ -663,18 +664,18 @@ namespace pdr_search
                 }
                 if (!models)
                 {
-                    std::cout<< "26: !models" << std::endl;
+                    std::cout << "26: !models" << std::endl;
                     // line 27
                     get_layer(i)->add_clause(c);
                     std::cout << "27: Push clause to L_" << i << ": c = " << c << ", L = " << *get_layer(i) << std::endl;
                 }
             }
-            std::cout << "29: L_" << i - 1 
-                << *get_layer(i - 1) 
-                << "== L_" << i 
-                << *get_layer(i) << ": -> " 
-                << (*get_layer(i - 1) == *get_layer(i)) 
-                << std::endl;
+            std::cout << "29: L_" << i - 1
+                      << *get_layer(i - 1)
+                      << "== L_" << i
+                      << *get_layer(i) << ": -> "
+                      << (*get_layer(i - 1) == *get_layer(i))
+                      << std::endl;
             if (*get_layer(i - 1) == *get_layer(i))
             {
                 // line 30
@@ -690,7 +691,6 @@ namespace pdr_search
     LiteralSet PDRSearch::from_state(const State &s) const
     {
         s.unpack();
-
 
         int i = 0;
         std::set<Literal> result;
