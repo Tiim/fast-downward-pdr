@@ -647,7 +647,7 @@ namespace pdr_search
                         break;
                     }
                 }
-                if (models)
+                if (!models)
                 {
                     // line 27
                     get_layer(i)->add_clause(c);
