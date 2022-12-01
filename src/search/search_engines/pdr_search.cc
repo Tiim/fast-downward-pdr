@@ -421,7 +421,7 @@ namespace pdr_search
         for (LiteralSet ls : c)
         {
             assert(ls.is_clause());
-            assert(ls.is_unit());
+            //assert(ls.is_unit());
         }
     }
     Layer Layer::operator=(const Layer &l) const
@@ -436,14 +436,13 @@ namespace pdr_search
             os << c;
         }
         os << "}";
-        // os << "Layer: {" << c.clauses << "}";
         return os;
     }
 
     void Layer::add_set(LiteralSet c)
     {
         assert(c.is_clause());
-        assert(c.is_unit());
+        //assert(c.is_unit());
         this->sets.insert(c);
     }
 
@@ -466,6 +465,9 @@ namespace pdr_search
     std::pair<LiteralSet, bool> PDRSearch::extend(LiteralSet s, Layer L)
     {
         std::cout << "e1: Call to extend s=" << s << ",  L=" << L << std::endl;
+        // input condition
+        assert(!s.models(L));
+        
         auto A = this->task_proxy.get_operators();
         //  Pseudocode 3
 
@@ -506,7 +508,7 @@ namespace pdr_search
             }
             std::cout << "e8: preₛᵃ=" << pre_sa << std::endl;
             // line 9
-            LiteralSet eff_a = SetType::CUBE;
+            LiteralSet eff_a = LiteralSet(SetType::CUBE);
             LiteralSet t = LiteralSet(s);
             for (auto eff_proxy : a.get_effects())
             {
@@ -534,6 +536,8 @@ namespace pdr_search
             if (pre_sa.size() == 0 && Lt.size() == 0)
             {
                 std::cout << "e12: Successor t found: t = " << t << std::endl;
+                // output condition of successor
+                assert(t.models(L));
                 return std::pair<LiteralSet, bool>(t, true);
             }
 
@@ -593,10 +597,10 @@ namespace pdr_search
         {
             // line 22
             std::cout << "e22: Rₐ="<< Ra <<std::endl; 
+            
             LiteralSet ra = LiteralSet(SetType::CUBE);
             for (auto ra_cur : Ra.get_sets())
             {
-                std::cout << "e22: rₐ=" << ra_cur << ", rₐ ∪ r =" << r.set_union(ra_cur) << std::endl;
                 if (ra.size() == 0 || r.set_union(ra).size() > r.set_union(ra_cur).size())
                 {
                     ra = ra_cur;
@@ -611,6 +615,8 @@ namespace pdr_search
         // line 29
         assert(r.size() > 0);
         std::cout << "e29: No successor t found, reason: r = " << r << std::endl;
+        // output condition of reason.
+        assert(r.is_subset_eq_of(s));
         return std::pair<LiteralSet, bool>(r, false);
     }
 
@@ -721,6 +727,7 @@ namespace pdr_search
                         auto L_j = get_layer(j);
                         std::cout << "15: Push clause to L_" << j << ": c = " << r.invert() << std::endl;
                         L_j->add_set(r.invert());
+                        std::cout << "15: L_" << j << " = " << *L_j << std::endl;
                     }
 
                     // line 18
