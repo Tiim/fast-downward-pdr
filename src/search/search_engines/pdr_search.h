@@ -118,6 +118,7 @@ namespace pdr_search
         std::set<LiteralSet> sets;
 
     public:
+        SetOfLiteralSets();
         SetOfLiteralSets(SetType type);
         SetOfLiteralSets(const SetOfLiteralSets &s);
         SetOfLiteralSets(const std::set<LiteralSet> sets, SetType type);
@@ -178,6 +179,7 @@ namespace pdr_search
     };
 
     extern void add_options_to_parser(options::OptionParser &parser);
+    std::ostream &operator<<(std::ostream &os, const std::set<SetOfLiteralSets> &s);
 }
 
 #endif
