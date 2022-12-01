@@ -78,9 +78,11 @@ namespace pdr_search
     {
     }
 
-    LiteralSet LiteralSet::operator=(const LiteralSet &s) const
+    LiteralSet& LiteralSet::operator=(const LiteralSet &s)
     {
-        return LiteralSet(s.literals, s.set_type);
+        literals = s.literals;
+        set_type = s.set_type;
+        return *this;
     }
 
     bool LiteralSet::operator==(const LiteralSet &s) const

@@ -54,7 +54,7 @@ namespace pdr_search
     class LiteralSet
     {
     private:
-        const SetType set_type;
+        SetType set_type;
         std::set<Literal> literals;
 
     public:
@@ -62,7 +62,7 @@ namespace pdr_search
         LiteralSet(Literal v, SetType type);
         LiteralSet(const LiteralSet &s);
         LiteralSet(std::set<Literal> init_literals, SetType type);
-        LiteralSet operator=(const LiteralSet &s) const;
+        LiteralSet& operator=(const LiteralSet &s);
         bool operator==(const LiteralSet &s) const;
         bool operator<(const LiteralSet &s) const;
         friend std::ostream &operator<<(std::ostream &os, const LiteralSet &ls);
