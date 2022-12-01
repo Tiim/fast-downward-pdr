@@ -223,10 +223,26 @@ namespace pdr_search
     {
         assert(set_type == s.set_type);
         std::set<Literal> output_set;
-        std::set_intersection(
-            literals.begin(), literals.end(),
-            s.literals.begin(), s.literals.end(),
-            output_set.begin());
+
+        // sometimes doesn't terminate ?
+        // std::set_intersection(
+        //    literals.begin(), literals.end(),
+        //    s.literals.begin(), s.literals.end(),
+        //    output_set.begin());
+
+        const LiteralSet *small = this, *big = &s;
+        if (this->size() >= s.size())
+        {
+            small = &s;
+            big = this;
+        }
+        for (auto l : big->get_literals())
+        {
+            if (small->contains_literal(l))
+            {
+                output_set.insert(l);
+            }
+        }
         return LiteralSet(output_set, set_type);
     }
 
