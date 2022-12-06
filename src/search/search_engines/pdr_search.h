@@ -102,13 +102,13 @@ namespace pdr_search
     class Obligation
     {
     private:
-        const LiteralSet state;
-        const int priority;
+        LiteralSet state;
+        int priority;
 
     public:
         Obligation(LiteralSet s, int priority);
         Obligation(const Obligation &o);
-        Obligation operator=(const Obligation &o) const;
+        Obligation& operator=(const Obligation &o);
         friend std::ostream &operator<<(std::ostream &os, const Obligation &o);
         int get_priority() const;
         LiteralSet get_state() const;

@@ -284,9 +284,11 @@ namespace pdr_search
     Obligation::Obligation(const Obligation &o) : state(o.state), priority(o.priority)
     {
     }
-    Obligation Obligation::operator=(const Obligation &o) const
+    Obligation& Obligation::operator=(const Obligation &o)
     {
-        return Obligation(o);
+        priority = o.priority;
+        state = o.state;
+        return *this;
     }
     std::ostream &operator<<(std::ostream &os, const Obligation &o)
     {
@@ -667,8 +669,16 @@ namespace pdr_search
 
     SearchStatus PDRSearch::step()
     {
+        struct obligationSort
+        {
+            bool operator()(const Obligation l, const Obligation r) const { return l.get_priority() > r.get_priority(); }
+        };
+
+
         std::cout << "------------------" << std::endl;
         std::cout << "Step " << iteration << " of PDR search" << std::endl;
+        std::cout << "------------------" << std::endl;
+
         // line 3
         const int k = iteration;
         iteration += 1;
@@ -684,7 +694,7 @@ namespace pdr_search
             // line 6
             std::cout
                 << "6: Initialize Q " << Obligation(s_i, k) << std::endl;
-            std::priority_queue<Obligation> Q;
+            std::priority_queue<Obligation, std::vector<Obligation>, obligationSort> Q;
             Q.push(Obligation(s_i, k));
 
             // line 7
@@ -801,8 +811,6 @@ namespace pdr_search
                 return SearchStatus::FAILED;
             }
         }
-
-        std::cout << "------------------" << std::endl;
         return SearchStatus::IN_PROGRESS;
     }
 
