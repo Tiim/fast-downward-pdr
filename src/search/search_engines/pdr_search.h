@@ -10,6 +10,11 @@
 #include <optional>
 #include <queue>
 
+#define COLOR_NONE "\033[0m"
+#define COLOR_RED "\033[0;31m"
+#define COLOR_GREEN "\033[0;32m"
+#define COLOR_CYAN "\033[0;36m"
+
 namespace options
 {
     class OptionParser;
@@ -176,6 +181,9 @@ namespace pdr_search
         // Coverts a state to a literal set as a cube
         // Same as the Lits(s) function in the paper
         LiteralSet from_state(const State &s) const;
+
+        LiteralSet from_precondition(const PreconditionsProxy &pc) const;
+        LiteralSet from_effect(const EffectsProxy &ep) const;
     };
 
     extern void add_options_to_parser(options::OptionParser &parser);

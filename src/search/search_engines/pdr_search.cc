@@ -48,7 +48,7 @@ namespace pdr_search
     }
     std::ostream &operator<<(std::ostream &os, const Literal &l)
     {
-        os << (l.positive ? "" : "¬") << "(" << l.variable << "," << l.value << ")";
+        os << COLOR_GREEN << (l.positive ? "" : "¬") << "(" << l.variable << "," << l.value << ")" << COLOR_NONE;
         return os;
     }
 
@@ -78,7 +78,7 @@ namespace pdr_search
     {
     }
 
-    LiteralSet& LiteralSet::operator=(const LiteralSet &s)
+    LiteralSet &LiteralSet::operator=(const LiteralSet &s)
     {
         literals = s.literals;
         set_type = s.set_type;
@@ -103,7 +103,7 @@ namespace pdr_search
     }
     std::ostream &operator<<(std::ostream &os, const LiteralSet &ls)
     {
-        os << "LiteralSet{";
+        os << COLOR_RED "{";
         bool first = true;
         for (auto c : ls.get_literals())
         {
@@ -116,9 +116,9 @@ namespace pdr_search
                 os << " ∨ ";
             }
             first = false;
-            os << c;
+            os << c << COLOR_RED;
         }
-        os << "} ";
+        os << "} " COLOR_NONE;
         return os;
     }
 
@@ -193,7 +193,6 @@ namespace pdr_search
 
     bool LiteralSet::is_subset_eq_of(const LiteralSet &ls) const
     {
-        assert(set_type == ls.set_type);
         if (size() > ls.size())
         {
             return false;
@@ -352,12 +351,12 @@ namespace pdr_search
     }
     std::ostream &operator<<(std::ostream &os, const SetOfLiteralSets &s)
     {
-        os << "SET{";
+        os << COLOR_CYAN "Set{";
         for (auto c : s.sets)
         {
             os << c;
         }
-        os << "}";
+        os << COLOR_CYAN "}" COLOR_NONE;
         return os;
     }
     size_t SetOfLiteralSets::size() const
@@ -421,7 +420,7 @@ namespace pdr_search
         for (LiteralSet ls : c)
         {
             assert(ls.is_clause());
-            //assert(ls.is_unit());
+            // assert(ls.is_unit());
         }
     }
     Layer Layer::operator=(const Layer &l) const
@@ -430,19 +429,19 @@ namespace pdr_search
     }
     std::ostream &operator<<(std::ostream &os, const Layer &l)
     {
-        os << "Layer{";
+        os << COLOR_CYAN "Layer{";
         for (auto c : l.sets)
         {
             os << c;
         }
-        os << "}";
+        os << COLOR_CYAN "}" COLOR_NONE;
         return os;
     }
 
     void Layer::add_set(LiteralSet c)
     {
         assert(c.is_clause());
-        //assert(c.is_unit());
+        // assert(c.is_unit());
         this->sets.insert(c);
     }
 
@@ -467,7 +466,7 @@ namespace pdr_search
         std::cout << "e1: Call to extend s=" << s << ",  L=" << L << std::endl;
         // input condition
         assert(!s.models(L));
-        
+
         auto A = this->task_proxy.get_operators();
         //  Pseudocode 3
 
@@ -496,26 +495,25 @@ namespace pdr_search
         // line 7
         for (auto a : A)
         {
-            LiteralSet pre_sa = SetType::CLAUSE;
-            for (auto fact : a.get_preconditions())
+            auto pre = from_precondition(a.get_preconditions());
+            std::cout << "e8: pre=" << pre << std::endl;
+            // line 8
+            auto pre_sa = LiteralSet(SetType::CLAUSE);
+            for (auto l : pre.get_literals())
             {
-                Literal l = Literal::from_fact(fact);
-                // line 8
-                if (!s.models(LiteralSet(l, SetType::CUBE)))
+                if (!s.models(LiteralSet(l, SetType::CLAUSE)))
                 {
                     pre_sa.add_literal(l);
                 }
             }
+            assert(pre_sa.is_subset_eq_of(pre));
             std::cout << "e8: preₛᵃ=" << pre_sa << std::endl;
+            
+            LiteralSet eff_a = from_effect(a.get_effects());
             // line 9
-            LiteralSet eff_a = LiteralSet(SetType::CUBE);
             LiteralSet t = LiteralSet(s);
-            for (auto eff_proxy : a.get_effects())
+            for (auto l : eff_a.get_literals())
             {
-                // build eff_a for later
-                Literal l = Literal::from_fact(eff_proxy.get_fact());
-                eff_a.add_literal(l);
-
                 // apply eff_a to t
                 t.apply_literal(l);
             }
@@ -542,10 +540,9 @@ namespace pdr_search
             }
 
             // line 13 & 14
-            std::cout << "e13: Lˢ ⊆ Lᵗ = " << Ls.is_subset_eq_of(Lt)
-                      << ", Lˢ=" << Ls << ", Lᵗ=" << Lt << std::endl;
-            if (Ls.is_subset_eq_of(Lt))
+            else if (Ls.is_subset_eq_of(Lt))
             {
+                std::cout << "e13: Lˢ ⊆ Lᵗ, Lˢ=" << Ls << ", Lᵗ=" << Lt << std::endl;
                 continue;
             }
             // line 15
@@ -586,6 +583,7 @@ namespace pdr_search
         }
 
         // line 20
+        std::cout << "Stage two: compute an overall reason" << std::endl;
         LiteralSet r = LiteralSet(SetType::CUBE);
         // line 21
         std::vector<SetOfLiteralSets> R = std::vector<SetOfLiteralSets>(Reasons.begin(), Reasons.end());
@@ -593,11 +591,12 @@ namespace pdr_search
                   { return f.size() < l.size(); });
 
         std::cout << "e21: ℛ = " << R << std::endl;
+        int i = 0;
         for (auto Ra : R)
         {
             // line 22
-            std::cout << "e22: Rₐ="<< Ra <<std::endl; 
-            
+            std::cout << "e22: Rₐ" << i << "=" << Ra << std::endl;
+
             LiteralSet ra = LiteralSet(SetType::CUBE);
             for (auto ra_cur : Ra.get_sets())
             {
@@ -607,6 +606,7 @@ namespace pdr_search
                 }
             }
             r = r.set_union(ra);
+            i += 1;
         }
         std::cout << "e23: r=" << r << std::endl;
 
@@ -615,6 +615,7 @@ namespace pdr_search
         // line 29
         assert(r.size() > 0);
         std::cout << "e29: No successor t found, reason: r = " << r << std::endl;
+        std::cout << "e29: s=" << s << std::endl;
         // output condition of reason.
         assert(r.is_subset_eq_of(s));
         return std::pair<LiteralSet, bool>(r, false);
@@ -819,7 +820,6 @@ namespace pdr_search
         }
         LiteralSet c = LiteralSet(result, SetType::CUBE);
 
-        // TODO: insert negated litrals
         auto vars = this->task_proxy.get_variables();
         int variable_index = 0;
         for (auto var : vars)
@@ -836,6 +836,51 @@ namespace pdr_search
             variable_index += 1;
         }
         return c;
+    }
+
+    LiteralSet PDRSearch::from_precondition(const PreconditionsProxy &pc) const
+    {
+        LiteralSet ls = SetType::CUBE;
+        for (auto fact : pc)
+        {
+            Literal l = Literal::from_fact(fact);
+            ls.add_literal(l);
+            // add other (variable, value) pairs inverted
+            int variable = fact.get_pair().var;
+            int dom_size = fact.get_variable().get_domain_size();
+            for (int i = 0; i < dom_size; i++)
+            {
+                Literal l = Literal(variable, i);
+                if (!ls.contains_literal(l))
+                {
+                    ls.add_literal(l.invert());
+                }
+            }
+        }
+        return ls;
+    }
+
+    LiteralSet PDRSearch::from_effect(const EffectsProxy &ep) const
+    {
+        LiteralSet ls = SetType::CUBE;
+        for (auto fact_prox : ep)
+        {
+            auto fact = fact_prox.get_fact();
+            Literal l = Literal::from_fact(fact);
+            ls.add_literal(l);
+            // add other (variable, value) pairs inverted
+            int variable = fact.get_pair().var;
+            int dom_size = fact.get_variable().get_domain_size();
+            for (int i = 0; i < dom_size; i++)
+            {
+                Literal l = Literal(variable, i);
+                if (!ls.contains_literal(l))
+                {
+                    ls.add_literal(l.invert());
+                }
+            }
+        }
+        return ls;
     }
 
     void add_options_to_parser(OptionParser &parser)
