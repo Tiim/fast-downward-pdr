@@ -50,6 +50,8 @@ namespace pdr_search
         bool operator<(const Literal &b) const;
         friend std::ostream &operator<<(std::ostream &os, const Literal &l);
         Literal invert() const;
+        Literal neg() const;
+        Literal pos() const;
         static Literal from_fact(FactProxy fp);
     };
 
@@ -75,6 +77,7 @@ namespace pdr_search
         SetType get_set_type() const;
 
         LiteralSet invert() const;
+        LiteralSet pos() const;
         size_t size() const;
         bool is_unit() const;
         bool is_clause() const;
@@ -88,6 +91,7 @@ namespace pdr_search
         bool is_subset_eq_of(const LiteralSet &ls) const;
         LiteralSet set_union(const LiteralSet &s) const;
         LiteralSet set_intersect(const LiteralSet &s) const;
+        LiteralSet set_minus(const LiteralSet &s) const;
 
         // Returns true if this LiteralSet is a model
         // of s.
@@ -184,6 +188,8 @@ namespace pdr_search
 
         LiteralSet from_precondition(const PreconditionsProxy &pc) const;
         LiteralSet from_effect(const EffectsProxy &ep) const;
+
+        LiteralSet all_variables() const;
     };
 
     extern void add_options_to_parser(options::OptionParser &parser);
