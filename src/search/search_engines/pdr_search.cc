@@ -17,18 +17,21 @@
 
 namespace pdr_search
 {
-    Literal::Literal(int var, int val) : variable(var), value(val)
+    Literal::Literal(int var, int val, FactProxy f) : variable(var), value(val), fact(f)
     {
     }
-    Literal::Literal(int var, int val, bool pos) : variable(var), value(val), positive(pos)
+    Literal::Literal(int var, int val, bool pos, FactProxy f) : variable(var), value(val), positive(pos), fact(f)
     {
     }
-    Literal::Literal(const Literal &l) : variable(l.variable), value(l.value), positive(l.positive)
+    Literal::Literal(const Literal &l) : variable(l.variable), value(l.value), positive(l.positive), fact(l.fact)
     {
     }
-    Literal Literal::operator=(const Literal &l) const
+    Literal &Literal::operator=(const Literal &l)
     {
-        return Literal(l);
+        variable = l.variable;
+        value = l.value;
+        fact = l.fact;
+        return *this;
     }
     bool Literal::operator==(const Literal &l) const
     {
@@ -48,28 +51,39 @@ namespace pdr_search
     }
     std::ostream &operator<<(std::ostream &os, const Literal &l)
     {
-        os << COLOR_GREEN << (l.positive ? "" : "¬") << "(" << l.variable << "," << l.value << ")" << COLOR_NONE;
+        auto name = l.fact.get_name();
+        auto color = (l.positive)? COLOR_GREEN : COLOR_YELLOW;
+        os << color << (l.positive ? "" : "¬") << "(";
+        if (name.size() > 0)
+        {
+            // os << COLOR_GRAY;
+            os << name; 
+            // os << "," << color;
+        }
+        // os << l.variable << "," << l.value;
+        os << ")" COLOR_NONE;
         return os;
     }
 
     Literal Literal::invert() const
     {
-        return Literal(variable, value, !positive);
+        return Literal(variable, value, !positive, fact);
     }
 
     Literal Literal::neg() const
     {
-        return Literal(variable, value, false);
+        return Literal(variable, value, false, fact);
     }
     Literal Literal::pos() const
     {
-        return Literal(variable, value, true);
+        return Literal(variable, value, true, fact);
     }
 
     Literal Literal::from_fact(FactProxy fp)
     {
         auto factPair = fp.get_pair();
-        return Literal(factPair.var, factPair.value);
+        auto name = fp.get_name();
+        return Literal(factPair.var, factPair.value, fp);
     }
 
     LiteralSet::LiteralSet(SetType type) : set_type(type)
@@ -375,9 +389,11 @@ namespace pdr_search
     SetOfLiteralSets::~SetOfLiteralSets()
     {
     }
-    SetOfLiteralSets SetOfLiteralSets::operator=(const SetOfLiteralSets &s) const
+    SetOfLiteralSets& SetOfLiteralSets::operator=(const SetOfLiteralSets &s)
     {
-        return SetOfLiteralSets(s);
+        set_type = s.set_type;
+        sets = s.sets;
+        return *this;
     }
 
     bool SetOfLiteralSets::operator==(const SetOfLiteralSets &s) const
@@ -476,10 +492,12 @@ namespace pdr_search
             // assert(ls.is_unit());
         }
     }
-    Layer Layer::operator=(const Layer &l) const
+    Layer& Layer::operator=(const Layer &l)
     {
-        return Layer(l);
+        sets = l.sets;
+        return *this;
     }
+
     std::ostream &operator<<(std::ostream &os, const Layer &l)
     {
         os << COLOR_CYAN "Layer{";
@@ -778,7 +796,7 @@ namespace pdr_search
                 // line 8
                 auto si = Q.top();
                 Q.pop();
-                std::cout << "8: Pop obligation from queue: (s, i) = " << si << std::endl;
+                std::cout << "8: Pop obligation from queue: (s, i) = " << *si << std::endl;
                 int i = si->get_priority();
                 auto s = si->get_state();
                 // line 9
@@ -806,10 +824,10 @@ namespace pdr_search
                     LiteralSet t = extended.first;
                     // line 12
                     Q.push(si);
-                    std::cout << "12: Add obligation to queue: " << si << std::endl;
+                    std::cout << "12: Add obligation to queue: " << *si << std::endl;
                     auto newObligation = std::shared_ptr<Obligation>(new Obligation(t, si->get_priority() - 1, si));
                     Q.push(newObligation);
-                    std::cout << "12: Add obligation to queue: " << newObligation << std::endl;
+                    std::cout << "12: Add obligation to queue: " << *newObligation << std::endl;
                 }
                 else
                 {
@@ -908,7 +926,7 @@ namespace pdr_search
         std::set<Literal> result;
         for (auto value : s.get_unpacked_values())
         {
-            Literal v = Literal(i, value);
+            Literal v = Literal::from_fact(FactProxy(*task, i, value));
             result.insert(result.begin(), v);
             i += 1;
         }
@@ -921,7 +939,7 @@ namespace pdr_search
             int dom_size = var.get_domain_size();
             for (int i = 0; i < dom_size; i++)
             {
-                Literal l = Literal(variable_index, i);
+                Literal l = Literal::from_fact(FactProxy(*task, variable_index, i));
                 if (!c.contains_literal(l))
                 {
                     c.add_literal(l.invert());
@@ -942,7 +960,7 @@ namespace pdr_search
             int dom_size = var.get_domain_size();
             for (int i = 0; i < dom_size; i++)
             {
-                Literal l = Literal(variable_index, i);
+                Literal l = Literal::from_fact(FactProxy(*task,variable_index, i));
                 c.add_literal(l);
             }
             variable_index += 1;
@@ -962,7 +980,7 @@ namespace pdr_search
             int dom_size = fact.get_variable().get_domain_size();
             for (int i = 0; i < dom_size; i++)
             {
-                Literal l = Literal(variable, i);
+                Literal l = Literal::from_fact(FactProxy(*task,variable, i));
                 if (!ls.contains_literal(l))
                 {
                     ls.add_literal(l.invert());
@@ -971,7 +989,6 @@ namespace pdr_search
         }
         return ls;
     }
-
     LiteralSet PDRSearch::from_effect(const EffectsProxy &ep) const
     {
         LiteralSet ls = SetType::CUBE;
@@ -985,7 +1002,7 @@ namespace pdr_search
             int dom_size = fact.get_variable().get_domain_size();
             for (int i = 0; i < dom_size; i++)
             {
-                Literal l = Literal(variable, i);
+                Literal l = Literal::from_fact(FactProxy(*task,variable, i));
                 if (!ls.contains_literal(l))
                 {
                     ls.add_literal(l.invert());

@@ -13,7 +13,9 @@
 #define COLOR_NONE "\033[0m"
 #define COLOR_RED "\033[0;31m"
 #define COLOR_GREEN "\033[0;32m"
+#define COLOR_YELLOW "\033[0;93m"
 #define COLOR_CYAN "\033[0;36m"
+#define COLOR_GRAY "\033[0;90m"
 
 namespace options
 {
@@ -37,22 +39,23 @@ namespace pdr_search
     class Literal
     {
     private:
-        const int variable;
-        const int value;
-        const bool positive = true;
+        int variable;
+        int value;
+        bool positive = true;
+        FactProxy fact;
 
     public:
-        Literal(int variable, int value);
-        Literal(int variable, int value, bool positive);
+        Literal(int variable, int value, FactProxy fp);
+        Literal(int variable, int value, bool positive, FactProxy fp);
         Literal(const Literal &l);
-        Literal operator=(const Literal &l) const;
+        Literal& operator=(const Literal &l);
         bool operator==(const Literal &l) const;
         bool operator<(const Literal &b) const;
         friend std::ostream &operator<<(std::ostream &os, const Literal &l);
         Literal invert() const;
         Literal neg() const;
         Literal pos() const;
-        static Literal from_fact(FactProxy fp);
+        static Literal from_fact(FactProxy f);
     };
 
     // A set of literals,
@@ -127,7 +130,7 @@ namespace pdr_search
     {
     protected:
         
-        const SetType set_type;
+        SetType set_type;
         std::set<LiteralSet> sets;
 
     public:
@@ -136,7 +139,7 @@ namespace pdr_search
         SetOfLiteralSets(const SetOfLiteralSets &s);
         SetOfLiteralSets(const std::set<LiteralSet> sets, SetType type);
         virtual ~SetOfLiteralSets();
-        SetOfLiteralSets operator=(const SetOfLiteralSets &l) const;
+        SetOfLiteralSets& operator=(const SetOfLiteralSets &l);
         bool operator==(const SetOfLiteralSets &s) const;
         bool operator<(const SetOfLiteralSets &s) const;
         friend std::ostream &operator<<(std::ostream &os, const SetOfLiteralSets &l);
@@ -156,7 +159,7 @@ namespace pdr_search
         Layer();
         Layer(const Layer &l);
         Layer(const std::set<LiteralSet> clauses);
-        Layer operator=(const Layer &l) const;
+        Layer& operator=(const Layer &l);
         friend std::ostream &operator<<(std::ostream &os, const Layer &l);
         void add_set(LiteralSet c);
         // Lₜₕᵢₛ ∖ Lₗ
