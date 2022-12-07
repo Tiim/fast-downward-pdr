@@ -704,6 +704,8 @@ namespace pdr_search
             auto g = this->task_proxy.get_goals();
             for (size_t i = 0; i < g.size(); i++)
             {
+                // no need to add the other literals as inverse,
+                // the goal is only a partial assignment.
                 l0.add_set(LiteralSet(Literal::from_fact(g[i]), SetType::CLAUSE));
             }
             this->layers.insert(this->layers.end(), l0);
@@ -750,8 +752,7 @@ namespace pdr_search
 
         std::cout << "4: Path construction" << std::endl;
         // line 5
-        auto initial_state = this->task_proxy.get_initial_state();
-        auto s_i = from_state(initial_state);
+        auto s_i = from_state(this->task_proxy.get_initial_state());
         if (s_i.models(*get_layer(k)))
         {
             std::cout << "5: " << s_i << " ⊧ " << *get_layer(k) << std::endl;
@@ -849,13 +850,13 @@ namespace pdr_search
                 bool models = true;
                 for (auto a : A)
                 {
-                    // build pre_a from preconditions
                     LiteralSet pre_a = from_precondition(a.get_preconditions());
                     // build apply(s_c, a)
                     LiteralSet applied = LiteralSet(s_c);
-                    for (auto a_i : a.get_effects())
+                    LiteralSet effect_a = from_effect(a.get_effects());
+                    for (auto l : effect_a.get_literals()) 
                     {
-                        applied.apply_literal(Literal::from_fact(a_i.get_fact()));
+                        applied.apply_literal(l);
                     }
                     if (s_c.models(pre_a) && applied.models(*get_layer(i - 1)))
                     {
