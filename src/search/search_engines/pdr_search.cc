@@ -162,7 +162,7 @@ namespace pdr_search
     LiteralSet LiteralSet::pos() const
     {
         std::set<Literal> new_set;
-        for (auto l : literals) 
+        for (auto l : literals)
         {
             new_set.insert(l.pos());
         }
@@ -314,7 +314,7 @@ namespace pdr_search
         return true;
     }
 
-    Obligation::Obligation(LiteralSet s, int p) : state(s), priority(p)
+    Obligation::Obligation(LiteralSet s, int p, std::shared_ptr<Obligation> par) : parent(par), state(s), priority(p)
     {
         assert(s.is_cube());
     }
@@ -347,6 +347,11 @@ namespace pdr_search
     {
         // We want an inverted priority queue. Smallest first
         return priority > o.priority;
+    }
+
+    const std::shared_ptr<Obligation> Obligation::get_parent() const
+    {
+        return parent;
     }
 
     SetOfLiteralSets::SetOfLiteralSets() : set_type(SetType::CUBE)
@@ -737,7 +742,9 @@ namespace pdr_search
     {
         struct obligationSort
         {
-            bool operator()(const Obligation l, const Obligation r) const { return l.get_priority() > r.get_priority(); }
+            bool operator()(const std::shared_ptr<Obligation> l, const std::shared_ptr<Obligation> r) const { 
+                return l->get_priority() > r->get_priority(); 
+            }
         };
 
         std::cout << "------------------" << std::endl;
@@ -758,26 +765,35 @@ namespace pdr_search
             std::cout << "5: " << s_i << " ⊧ " << *get_layer(k) << std::endl;
 
             // line 6
+            auto o = std::shared_ptr<Obligation>(new Obligation(s_i, k, nullptr));
             std::cout
-                << "6: Initialize Q " << Obligation(s_i, k) << std::endl;
-            std::priority_queue<Obligation, std::vector<Obligation>, obligationSort> Q;
-            Q.push(Obligation(s_i, k));
+                << "6: Initialize Q " << *o << std::endl;
+            std::priority_queue<std::shared_ptr<Obligation>, std::vector<std::shared_ptr<Obligation>>, obligationSort> Q;
+            Q.push(o);
 
             // line 7
             while (!Q.empty())
             {
 
                 // line 8
-                Obligation si = Q.top();
+                auto si = Q.top();
                 Q.pop();
                 std::cout << "8: Pop obligation from queue: (s, i) = " << si << std::endl;
-                int i = si.get_priority();
-                auto s = si.get_state();
+                int i = si->get_priority();
+                auto s = si->get_state();
                 // line 9
                 if (i == 0)
                 {
                     // line 10
+                    // TODO: turn witnessing path to plan
                     std::cout << "10: Path found" << std::endl;
+                    auto o = si;
+                    do
+                    {
+                        std::cout << "Step: " << o->get_priority() << o->get_state() << std::endl;
+                        o = o->get_parent();
+                    } while (o->get_parent() != nullptr);
+                    std::cout << "Step: i" << s_i << std::endl;
                     return SearchStatus::SOLVED;
                 }
 
@@ -791,8 +807,9 @@ namespace pdr_search
                     // line 12
                     Q.push(si);
                     std::cout << "12: Add obligation to queue: " << si << std::endl;
-                    Q.push(Obligation(t, si.get_priority() - 1));
-                    std::cout << "12: Add obligation to queue: " << Obligation(t, si.get_priority() - 1) << std::endl;
+                    auto newObligation = std::shared_ptr<Obligation>(new Obligation(t, si->get_priority() - 1, si));
+                    Q.push(newObligation);
+                    std::cout << "12: Add obligation to queue: " << newObligation << std::endl;
                 }
                 else
                 {
@@ -811,7 +828,8 @@ namespace pdr_search
                     if (i < k)
                     {
                         // line 19
-                        Q.push(Obligation(s, i + 1));
+                        auto newObligation = std::shared_ptr<Obligation>(new Obligation(s, i + 1, si->get_parent()));
+                        Q.push(newObligation);
                     }
                 }
             }
@@ -831,9 +849,9 @@ namespace pdr_search
             std::cout << "22: L_" << i << " = " << Li << std::endl;
             for (auto c : Li1.set_minus(Li).get_sets())
             {
-                std::cout << "23: foreach c in L_" << (i-1) << " \\ L_" << i << std::endl;
-                std::cout << "25: c = " << c << std::endl; 
-                std::cout << "25: X \\ c  = " << X.set_minus(c.pos()) << std::endl; 
+                std::cout << "23: foreach c in L_" << (i - 1) << " \\ L_" << i << std::endl;
+                std::cout << "25: c = " << c << std::endl;
+                std::cout << "25: X \\ c  = " << X.set_minus(c.pos()) << std::endl;
                 // line 25
                 LiteralSet s_c = LiteralSet(SetType::CUBE);
                 for (auto p : c.get_literals())
@@ -844,8 +862,8 @@ namespace pdr_search
                 {
                     s_c.add_literal(p.pos());
                 }
-                std::cout<< "25: s_c " << s_c << std::endl;
-                
+                std::cout << "25: s_c " << s_c << std::endl;
+
                 // line 26
                 bool models = true;
                 for (auto a : A)
@@ -854,7 +872,7 @@ namespace pdr_search
                     // build apply(s_c, a)
                     LiteralSet applied = LiteralSet(s_c);
                     LiteralSet effect_a = from_effect(a.get_effects());
-                    for (auto l : effect_a.get_literals()) 
+                    for (auto l : effect_a.get_literals())
                     {
                         applied.apply_literal(l);
                     }

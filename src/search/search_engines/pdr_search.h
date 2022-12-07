@@ -106,17 +106,21 @@ namespace pdr_search
     class Obligation
     {
     private:
+        // Parent pointer to recover witnessing path.
+        // Defined in SUDA 3.2
+        std::shared_ptr<Obligation> parent;
         LiteralSet state;
         int priority;
 
     public:
-        Obligation(LiteralSet s, int priority);
+        Obligation(LiteralSet s, int priority, std::shared_ptr<Obligation> parent);
         Obligation(const Obligation &o);
         Obligation& operator=(const Obligation &o);
         friend std::ostream &operator<<(std::ostream &os, const Obligation &o);
         int get_priority() const;
         LiteralSet get_state() const;
         bool operator<(const Obligation &o) const;
+        const std::shared_ptr<Obligation> get_parent() const;
     };
 
     class SetOfLiteralSets
