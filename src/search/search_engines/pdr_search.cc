@@ -864,6 +864,7 @@ namespace pdr_search
             // line 23
             auto Li1 = *get_layer(i - 1);
             auto Li = *get_layer(i);
+            std::cout << "22: L_" << (i-1) << " = " << Li1 << std::endl;
             std::cout << "22: L_" << i << " = " << Li << std::endl;
             for (auto c : Li1.set_minus(Li).get_sets())
             {
@@ -883,7 +884,7 @@ namespace pdr_search
                 std::cout << "25: s_c " << s_c << std::endl;
 
                 // line 26
-                bool models = true;
+                bool models = false;
                 for (auto a : A)
                 {
                     LiteralSet pre_a = from_precondition(a.get_preconditions());
@@ -896,7 +897,7 @@ namespace pdr_search
                     }
                     if (s_c.models(pre_a) && applied.models(*get_layer(i - 1)))
                     {
-                        models = false;
+                        models = true;
                         break;
                     }
                 }
