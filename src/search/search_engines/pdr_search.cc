@@ -312,7 +312,7 @@ namespace pdr_search
         }
         else
         {
-            return is_subset_eq_of(c);
+            return c.is_subset_eq_of(*this);
         }
     }
 
