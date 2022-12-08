@@ -975,17 +975,6 @@ namespace pdr_search
         {
             Literal l = Literal::from_fact(fact);
             ls.add_literal(l);
-            // add other (variable, value) pairs inverted
-            int variable = fact.get_pair().var;
-            int dom_size = fact.get_variable().get_domain_size();
-            for (int i = 0; i < dom_size; i++)
-            {
-                Literal l = Literal::from_fact(FactProxy(*task,variable, i));
-                if (!ls.contains_literal(l))
-                {
-                    ls.add_literal(l.invert());
-                }
-            }
         }
         return ls;
     }
