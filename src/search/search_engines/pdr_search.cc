@@ -872,15 +872,12 @@ namespace pdr_search
                 std::cout << "23: foreach c in L_" << (i - 1) << " \\ L_" << i << std::endl;
                 std::cout << "25: c = " << c << std::endl;
                 std::cout << "25: X \\ c  = " << X.set_minus(c.pos()) << std::endl;
+
                 // line 25
-                LiteralSet s_c = LiteralSet(SetType::CUBE);
+                LiteralSet s_c = LiteralSet(X.get_literals(), SetType::CUBE);
                 for (auto p : c.get_literals())
                 {
-                    s_c.add_literal(p.neg());
-                }
-                for (auto p : X.set_minus(c.pos()).get_literals())
-                {
-                    s_c.add_literal(p.pos());
+                    s_c.apply_literal(p.neg());
                 }
                 std::cout << "25: s_c " << s_c << std::endl;
 
