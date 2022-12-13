@@ -82,7 +82,6 @@ namespace pdr_search
     Literal Literal::from_fact(FactProxy fp)
     {
         auto factPair = fp.get_pair();
-        auto name = fp.get_name();
         return Literal(factPair.var, factPair.value, fp);
     }
 
@@ -253,19 +252,16 @@ namespace pdr_search
         {
             tmp.add_literal(l);
         }
+
+        assert(is_subset_eq_of(tmp));
+        assert(s.is_subset_eq_of(tmp));
         return tmp;
     }
 
     LiteralSet LiteralSet::set_intersect(const LiteralSet &s) const
     {
         assert(set_type == s.set_type);
-        std::set<Literal> output_set;
-
-        // sometimes doesn't terminate ?
-        // std::set_intersection(
-        //    literals.begin(), literals.end(),
-        //    s.literals.begin(), s.literals.end(),
-        //    output_set.begin());
+        auto output = LiteralSet(set_type);
 
         const LiteralSet *small = this, *big = &s;
         if (this->size() >= s.size())
@@ -277,10 +273,14 @@ namespace pdr_search
         {
             if (small->contains_literal(l))
             {
-                output_set.insert(l);
+                output.add_literal(l);
             }
         }
-        return LiteralSet(output_set, set_type);
+
+        assert(output.is_subset_eq_of(*this));
+        assert(output.is_subset_eq_of(s));
+
+        return output;
     }
 
     LiteralSet LiteralSet::set_minus(const LiteralSet &s) const
@@ -293,7 +293,9 @@ namespace pdr_search
                 nliterals.insert(l);
             }
         }
-        return LiteralSet(nliterals, set_type);
+        auto output = LiteralSet(nliterals, set_type);
+        assert(output.is_subset_eq_of(*this));
+        return output;
     }
 
     bool LiteralSet::models(const LiteralSet &c) const
@@ -374,13 +376,11 @@ namespace pdr_search
     SetOfLiteralSets::SetOfLiteralSets(SetType type) : set_type(type)
     {
     }
-    SetOfLiteralSets::SetOfLiteralSets(const SetOfLiteralSets &s) : set_type(s.set_type)
+    SetOfLiteralSets::SetOfLiteralSets(const SetOfLiteralSets &s) : set_type(s.set_type), sets(s.sets)
     {
-        this->sets = std::set<LiteralSet>(s.sets);
     }
-    SetOfLiteralSets::SetOfLiteralSets(const std::set<LiteralSet> s, SetType type) : set_type(type)
+    SetOfLiteralSets::SetOfLiteralSets(const std::set<LiteralSet> s, SetType type) : set_type(type), sets(s)
     {
-        this->sets = std::set<LiteralSet>(s);
         for (auto set : s)
         {
             assert(set.get_set_type() == type);
@@ -474,6 +474,7 @@ namespace pdr_search
         {
             lnew.add_set(clause);
         }
+        assert(lnew.is_subset_eq_of(*this));
         return lnew;
     }
 
@@ -521,7 +522,6 @@ namespace pdr_search
     void Layer::add_set(LiteralSet c)
     {
         assert(c.is_clause());
-        // assert(c.is_unit());
         this->sets.insert(c);
     }
 
@@ -538,6 +538,7 @@ namespace pdr_search
         {
             lnew.add_set(clause);
         }
+        assert(lnew.is_subset_eq_of(*this));
         return lnew;
     }
 
