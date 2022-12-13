@@ -303,6 +303,7 @@ namespace pdr_search
         assert(is_cube());
         if (c.is_clause())
         {
+            // rhs must contain at least one literal from the lhs
             for (auto cl : c.get_literals())
             {
                 if (contains_literal(cl))
@@ -314,6 +315,7 @@ namespace pdr_search
         }
         else
         {
+            // lhs must be more or equally strict than rhs
             return c.is_subset_eq_of(*this);
         }
     }
@@ -813,6 +815,7 @@ namespace pdr_search
                         o = o->get_parent();
                     } while (o->get_parent() != nullptr);
                     std::cout << "Step: i" << s_i << std::endl;
+                    std::cout << "Plan: " << std::endl;
                     return SearchStatus::SOLVED;
                 }
 
@@ -882,7 +885,7 @@ namespace pdr_search
                 std::cout << "25: s_c " << s_c << std::endl;
 
                 // line 26
-                bool models = false;
+                bool for_all_not_models = true;
                 for (auto a : A)
                 {
                     LiteralSet pre_a = from_precondition(a.get_preconditions());
@@ -893,15 +896,15 @@ namespace pdr_search
                     {
                         applied.apply_literal(l);
                     }
-                    if (s_c.models(pre_a) && applied.models(*get_layer(i - 1)))
+                    if (!(!s_c.models(pre_a) || !applied.models(*get_layer(i - 1))))
                     {
-                        models = true;
+                        for_all_not_models = false;
                         break;
                     }
                 }
-                if (!models)
+                if (for_all_not_models)
                 {
-                    std::cout << "26: !models" << std::endl;
+                    std::cout << "26: for_all_not_models" << std::endl;
                     // line 27
                     get_layer(i)->add_set(c);
                     std::cout << "27: Push clause to L_" << i << ": c = " << c << ", L = " << *get_layer(i) << std::endl;
