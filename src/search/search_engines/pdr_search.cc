@@ -656,13 +656,15 @@ namespace pdr_search
                 std::cout << "e17: Ra (left) = " << R_a << std::endl;
                 for (auto c : Lt0.get_sets())
                 {
+                    LiteralSet ls = LiteralSet(SetType::CUBE);
                     for (auto l : c.get_literals())
                     {
                         if (!eff_a.contains_literal(l.invert()))
                         {
-                            R_a.add_set(LiteralSet(l.invert(), SetType::CUBE));
+                            ls.add_literal(l.invert());
                         }
                     }
+                    R_a.add_set(ls);
                 }
                 std::cout << "e17: Rₐ = " << R_a << std::endl;
                 // line 18
