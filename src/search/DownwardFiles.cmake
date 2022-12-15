@@ -391,7 +391,7 @@ fast_downward_plugin(
     HELP "Property-directed reachability search algorithm"
     SOURCES
         search_engines/pdr_search
-    DEPENDS ORDERED_SET
+    DEPENDS ORDERED_SET PDR
     DEPENDENCY_ONLY
 )
 
@@ -790,6 +790,16 @@ fast_downward_plugin(
         pdbs/zero_one_pdbs
         pdbs/zero_one_pdbs_heuristic
     DEPENDS CAUSAL_GRAPH MAX_CLIQUES PRIORITY_QUEUES SAMPLING SUCCESSOR_GENERATOR TASK_PROPERTIES VARIABLE_ORDER_FINDER
+)
+
+fast_downward_plugin(
+    NAME PDR
+    HELP "Plugin containing the code for PDR"
+    SOURCES
+        pdr/data-structures
+        pdr/heuristic
+        pdr/pattern-database
+    DEPENDENCY_ONLY
 )
 
 fast_downward_plugin(
