@@ -190,6 +190,14 @@ namespace pdr_search
 
     PDRSearch::PDRSearch(const Options &opts) : SearchEngine(opts)
     {
+        heuristic = new NoopPDRHeuristic();
+    }
+
+    PDRSearch::~PDRSearch()
+    {
+        if (this->heuristic) {
+            delete this->heuristic;
+        }
     }
 
     Layer *PDRSearch::get_layer(long unsigned int i)
@@ -216,9 +224,11 @@ namespace pdr_search
         else
         {
             Layer l_i = Layer();
+            if (this->heuristic) {
+                l_i = this->heuristic->initial_heuristic_layer(i);
+            }
             this->layers.insert(this->layers.end(), l_i);
 
-            // TODO: initialize layer with heuristic here
             return &layers[i];
         }
     }

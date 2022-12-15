@@ -5,6 +5,7 @@
 #include "search_common.h"
 
 #include "../pdr/data-structures.h"
+#include "../pdr/heuristic.h"
 
 #include <vector>
 #include <set>
@@ -23,6 +24,7 @@ namespace pdr_search
 
     class PDRSearch : public SearchEngine
     {
+        PDRHeuristic* heuristic;
         std::vector<Layer> layers;
         int iteration = 0;
 
@@ -38,7 +40,7 @@ namespace pdr_search
 
     public:
         PDRSearch(const options::Options &opts);
-        ~PDRSearch() = default;
+        ~PDRSearch();
 
         virtual void print_statistics() const override;
 
