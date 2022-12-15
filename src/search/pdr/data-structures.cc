@@ -100,6 +100,11 @@ namespace pdr_search
     }
     return false;
   }
+  bool LiteralSet::operator!=(const LiteralSet &s) const
+  {
+    return !(*this == s);
+  }
+  
   bool LiteralSet::operator<(const LiteralSet &b) const
   {
     if (!(literals < b.literals) && !(b.literals < literals))
@@ -206,6 +211,14 @@ namespace pdr_search
   {
     remove_literal(l.invert());
     add_literal(l);
+  }
+
+  void LiteralSet::apply_cube(LiteralSet l)
+  {
+    assert(l.is_cube());
+    for (auto lit : l.get_literals()) {
+      apply_literal(lit);
+    }
   }
 
   bool LiteralSet::contains_literal(Literal l) const

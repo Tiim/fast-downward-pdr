@@ -61,6 +61,7 @@ namespace pdr_search
     LiteralSet(std::set<Literal> init_literals, SetType type);
     LiteralSet &operator=(const LiteralSet &s);
     bool operator==(const LiteralSet &s) const;
+    bool operator!=(const LiteralSet &s) const;
     bool operator<(const LiteralSet &s) const;
     friend std::ostream &operator<<(std::ostream &os, const LiteralSet &ls);
     std::set<Literal> get_literals() const;
@@ -77,6 +78,7 @@ namespace pdr_search
     void remove_literal(Literal l);
     // Remove ¬l, add l
     void apply_literal(Literal l);
+    void apply_cube(LiteralSet l);
     bool contains_literal(Literal l) const;
     bool is_subset_eq_of(const LiteralSet &ls) const;
     LiteralSet set_union(const LiteralSet &s) const;

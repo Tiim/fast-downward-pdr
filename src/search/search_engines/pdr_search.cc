@@ -3,6 +3,7 @@
 #include "../option_parser.h"
 
 #include "../utils/logging.h"
+#include "../plan_manager.h"
 
 #include <cassert>
 #include <cstdlib>
@@ -295,16 +296,10 @@ namespace pdr_search
                 if (i == 0)
                 {
                     // line 10
-                    // TODO: turn witnessing path to plan
-                    std::cout << "10: Path found" << std::endl;
-                    auto o = si;
-                    do
-                    {
-                        std::cout << "Step: " << o->get_priority() << o->get_state() << std::endl;
-                        o = o->get_parent();
-                    } while (o->get_parent() != nullptr);
-                    std::cout << "Step: i" << s_i << std::endl;
-                    std::cout << "Plan: " << std::endl;
+                    // std::cout << "10: Path found" << std::endl;
+                    extract_path(si, s_i);
+                    // std::cout << "Step: i" << s_i << std::endl;
+                    // std::cout << "Plan: " << std::endl;
                     return SearchStatus::SOLVED;
                 }
 
@@ -335,8 +330,8 @@ namespace pdr_search
                         // std::cout << "15: L_" << j << " = " << *L_j << std::endl;
                     }
 
-                    // line 18
-                    if (i < k)
+                    // line 18 obligation rescheduling
+                    if (enable_obligation_rescheduling && i < k)
                     {
                         // line 19
                         auto newObligation = std::shared_ptr<Obligation>(new Obligation(s, i + 1, si->get_parent()));
@@ -407,6 +402,46 @@ namespace pdr_search
             }
         }
         return SearchStatus::IN_PROGRESS;
+    }
+
+    void PDRSearch::extract_path(const std::shared_ptr<Obligation> goal_obligation, const LiteralSet initialState)
+    {
+        std::shared_ptr<Obligation> ob = goal_obligation;
+        std::vector<LiteralSet> state_list = std::vector<LiteralSet>();
+        do
+        {
+            state_list.insert(state_list.begin(), ob->get_state());
+            ob = ob->get_parent();
+        } while (ob->get_parent() != nullptr);
+        state_list.insert(state_list.begin(), initialState);
+
+        std::vector<OperatorID> plan;
+        auto operators = task_proxy.get_operators();
+        for (size_t i = 1; i < state_list.size(); i++)
+        {
+            OperatorID matched_op = OperatorID::no_operator;
+            for (OperatorProxy op : operators)
+            {
+                auto pre = from_precondition(op.get_preconditions());
+                auto state = state_list[i - 1];
+                if (!state.models(pre))
+                {
+                    continue;
+                }
+                auto eff = from_effect(op.get_effects());
+                state.apply_cube(eff);
+                if (state != state_list[i])
+                {
+                    continue;
+                }
+                matched_op = OperatorID(op.get_id());
+                std::cout << "Step " << i << " - matching operator " << op.get_name() << std::endl;
+            }
+            assert(matched_op != OperatorID::no_operator);
+            plan.insert(plan.end(), matched_op);
+        }
+        assert(plan.size() == state_list.size() - 1);
+        set_plan(plan);
     }
 
     LiteralSet PDRSearch::from_state(const State &s) const

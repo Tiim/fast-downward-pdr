@@ -24,7 +24,10 @@ namespace pdr_search
 
     class PDRSearch : public SearchEngine
     {
-        PDRHeuristic* heuristic;
+        // TODO: make this configurable via the command line
+        bool enable_obligation_rescheduling = false;
+
+        PDRHeuristic *heuristic;
         std::vector<Layer> layers;
         int iteration = 0;
 
@@ -38,13 +41,13 @@ namespace pdr_search
         virtual void initialize() override;
         virtual SearchStatus step() override;
 
+        void extract_path(const std::shared_ptr<Obligation> goal_obligation, const LiteralSet initialState);
+
     public:
         PDRSearch(const options::Options &opts);
         ~PDRSearch();
 
         virtual void print_statistics() const override;
-
-        void dump_search_space() const;
 
         // Coverts a state to a literal set as a cube
         // Same as the Lits(s) function in the paper
