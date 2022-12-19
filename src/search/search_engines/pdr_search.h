@@ -27,7 +27,7 @@ namespace pdr_search
         // TODO: make this configurable via the command line
         bool enable_obligation_rescheduling = false;
 
-        PDRHeuristic *heuristic;
+        std::shared_ptr<PDRHeuristic> heuristic;
         std::vector<Layer> layers;
         int iteration = 0;
 

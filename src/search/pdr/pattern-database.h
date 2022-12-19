@@ -3,6 +3,9 @@
 
 #include "heuristic.h"
 #include "../pdbs/pattern_database.h"
+#include "../pdbs/pattern_information.h"
+#include "../pdbs/pattern_generator.h"
+#include "../option_parser.h"
 
 namespace pdr_search
 {
@@ -10,12 +13,13 @@ namespace pdr_search
   class PatternDBPDRHeuristic : public PDRHeuristic
   {
     private:
-    
-    const pdbs::PatternDatabase *pattern_database;
+      const std::shared_ptr<pdbs::PatternDatabase> pattern_database;
 
     public:
-    PatternDBPDRHeuristic(const pdbs::PatternDatabase &pdb);
-    Layer initial_heuristic_layer(int i);
+      PatternDBPDRHeuristic(const options::Options &opts);
+      Layer initial_heuristic_layer(int i);
+
+      static std::shared_ptr<PDRHeuristic> parse(OptionParser &parser);
   };
 }
 #endif

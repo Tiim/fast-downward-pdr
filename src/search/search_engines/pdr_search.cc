@@ -5,6 +5,9 @@
 #include "../utils/logging.h"
 #include "../plan_manager.h"
 
+#include "../pdr/pattern-database.h"
+#include "../pdbs/pattern_generator_greedy.h"
+
 #include <cassert>
 #include <cstdlib>
 #include <memory>
@@ -190,19 +193,6 @@ namespace pdr_search
         return std::pair<LiteralSet, bool>(r, false);
     }
 
-    PDRSearch::PDRSearch(const Options &opts) : SearchEngine(opts)
-    {
-        heuristic = new NoopPDRHeuristic();
-    }
-
-    PDRSearch::~PDRSearch()
-    {
-        if (this->heuristic)
-        {
-            delete this->heuristic;
-        }
-    }
-
     Layer *PDRSearch::get_layer(long unsigned int i)
     {
         assert(i <= layers.size() + 1);
@@ -221,6 +211,9 @@ namespace pdr_search
                 // the goal is only a partial assignment.
                 l0.add_set(LiteralSet(Literal::from_fact(g[i]), SetType::CLAUSE));
             }
+            // std::cout << "Layer 0 (goal): " << l0 << std::endl;
+            std::cout << "Layer 0 (goal) size: " << l0.size() << " clauses" << std::endl;
+
             this->layers.insert(this->layers.end(), l0);
             return &layers[i];
         }
@@ -231,8 +224,10 @@ namespace pdr_search
             {
                 l_i = this->heuristic->initial_heuristic_layer(i);
             }
-            this->layers.insert(this->layers.end(), l_i);
+            // std::cout << "Layer " << i << ": " << l_i << std::endl;
+            std::cout << "Layer " << i << " size: " << l_i.size() << " clauses" << std::endl;
 
+            this->layers.insert(this->layers.end(), l_i);
             return &layers[i];
         }
     }
@@ -527,9 +522,25 @@ namespace pdr_search
         return ls;
     }
 
+    PDRSearch::PDRSearch(const Options &opts) : SearchEngine(opts)
+    {
+        std::shared_ptr<PDRHeuristic> pdr_heuristic =
+            opts.get<std::shared_ptr<PDRHeuristic>>("heuristic");
+
+        heuristic = pdr_heuristic;
+    }
+
+    PDRSearch::~PDRSearch()
+    {
+    }
+
     void add_options_to_parser(OptionParser &parser)
     {
         SearchEngine::add_options_to_parser(parser);
+        parser.add_option<std::shared_ptr<PDRHeuristic>>(
+            "heuristic",
+            "pdr heuristic",
+            "pdr-noop()");
     }
 
     // helper method to print sets of SetOfliteralSets
