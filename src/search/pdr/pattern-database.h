@@ -13,7 +13,7 @@ namespace pdr_search
   class PatternDBPDRHeuristic : public PDRHeuristic
   {
     private:
-      const std::shared_ptr<pdbs::PatternDatabase> pattern_database;
+      std::shared_ptr<pdbs::PatternDatabase> pattern_database;
 
     public:
       PatternDBPDRHeuristic(const options::Options &opts);

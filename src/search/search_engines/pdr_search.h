@@ -24,8 +24,8 @@ namespace pdr_search
 
     class PDRSearch : public SearchEngine
     {
-        // TODO: make this configurable via the command line
-        bool enable_obligation_rescheduling = false;
+        bool enable_obligation_rescheduling = true;
+        bool enable_layer_simplification = false;
 
         std::shared_ptr<PDRHeuristic> heuristic;
         std::vector<Layer> layers;

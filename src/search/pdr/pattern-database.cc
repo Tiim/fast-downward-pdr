@@ -11,6 +11,8 @@ namespace pdr_search
     
 
     pdbs::PatternInformation pattern_info = pattern_generator->generate(task);
+
+    pattern_database = pattern_info.get_pdb();
     
     auto pattern = pattern_database->get_pattern();
     auto variables = TaskProxy(*task).get_variables();
@@ -62,8 +64,8 @@ namespace pdr_search
       // Since the heuristic is admissible, the heuristic distance is always smaller or equal to the 
       // real distance.
       int dist = pattern_database->get_value(current_state);
-      // If the heuristic distance is bigger than the current layer number i,
-      // the goal can not be reached from current_state in i steps.
+      // If the heuristic distance is <= than the current layer number i,
+      // the goal can be possibly reached from current_state in i steps.
       if (dist > i)
       {
         // Strengthen the layer such that the abstract state of 'current_state'
@@ -73,18 +75,14 @@ namespace pdr_search
         for (size_t j = 0; j < pattern.size(); j += 1)
         {
           Literal l = Literal::from_fact(FactProxy(*task, pattern[j], current_state[pattern[j]]));
+          
+          // TODO: Layers should consist of non negative literals only. (Why?)
           ls.add_literal(l.invert());
         }
 
         states.insert(states.end(), ls);
       }
     }
-    // TODO:
-    //  - [ ] find all abstract states from pattern
-    //  - [ ] get all abstract states with h(s) > i
-    //  - [ ] convert them to clauses
-    //  - [ ] initialize layer with those clauses
-
     return Layer(std::set<LiteralSet>(states));
   }
 

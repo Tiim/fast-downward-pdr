@@ -64,7 +64,7 @@ namespace pdr_search
     bool operator!=(const LiteralSet &s) const;
     bool operator<(const LiteralSet &s) const;
     friend std::ostream &operator<<(std::ostream &os, const LiteralSet &ls);
-    std::set<Literal> get_literals() const;
+    std::set<Literal> &get_literals();
     SetType get_set_type() const;
 
     LiteralSet invert() const;
@@ -93,6 +93,8 @@ namespace pdr_search
     bool models(const LiteralSet &c) const;
     // returns true if this literal set models every clause in the layer
     bool models(const Layer &l) const;
+
+    void simplify();
   };
 
   class Obligation
@@ -151,6 +153,8 @@ namespace pdr_search
     void add_set(LiteralSet c);
     // Lₜₕᵢₛ ∖ Lₗ
     Layer set_minus(const Layer &l) const;
+
+    void simplify();
   };
 }
 #endif

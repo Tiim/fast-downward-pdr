@@ -104,7 +104,7 @@ namespace pdr_search
   {
     return !(*this == s);
   }
-  
+
   bool LiteralSet::operator<(const LiteralSet &b) const
   {
     if (!(literals < b.literals) && !(b.literals < literals))
@@ -117,7 +117,7 @@ namespace pdr_search
   {
     os << COLOR_RED "{";
     bool first = true;
-    for (auto c : ls.get_literals())
+    for (auto c : ls.literals)
     {
       if (!first && ls.set_type == SetType::CUBE)
       {
@@ -134,7 +134,7 @@ namespace pdr_search
     return os;
   }
 
-  std::set<Literal> LiteralSet::get_literals() const
+  std::set<Literal> &LiteralSet::get_literals()
   {
     return literals;
   }
@@ -216,7 +216,8 @@ namespace pdr_search
   void LiteralSet::apply_cube(LiteralSet l)
   {
     assert(l.is_cube());
-    for (auto lit : l.get_literals()) {
+    for (auto lit : l.get_literals())
+    {
       apply_literal(lit);
     }
   }
@@ -302,7 +303,7 @@ namespace pdr_search
     if (c.is_clause())
     {
       // rhs must contain at least one literal from the lhs
-      for (auto cl : c.get_literals())
+      for (auto cl : c.literals)
       {
         if (contains_literal(cl))
         {
@@ -328,6 +329,21 @@ namespace pdr_search
       }
     }
     return true;
+  }
+
+  void LiteralSet::simplify()
+  {
+    for (auto l : literals)
+    {
+      // a ∧ ¬ a ∧ ... = a ∧ ¬ a = ⊥
+      // b ∨ ¬ b ∨ ... = b ∨ ¬ b = ⊤
+      if (contains_literal(l.invert()))
+      {
+        literals.clear();
+        literals.insert(l);
+        literals.insert(l.invert());
+      }
+    }
   }
 
   Obligation::Obligation(LiteralSet s, int p, std::shared_ptr<Obligation> par) : parent(par), state(s), priority(p)
@@ -437,19 +453,19 @@ namespace pdr_search
   {
     return sets;
   }
-  
+
   void SetOfLiteralSets::add_set(LiteralSet c)
   {
     assert(c.get_set_type() == set_type);
     this->sets.insert(c);
   }
-  
+
   bool SetOfLiteralSets::contains_set(LiteralSet c) const
   {
     auto res = this->sets.find(c);
     return res != this->sets.end();
   }
-  
+
   bool SetOfLiteralSets::is_subset_eq_of(const SetOfLiteralSets &s) const
   {
     if (this->size() > s.size())
@@ -465,7 +481,7 @@ namespace pdr_search
     }
     return true;
   }
-  
+
   SetOfLiteralSets SetOfLiteralSets::set_minus(const SetOfLiteralSets &l) const
   {
     std::set<LiteralSet> result;
@@ -490,7 +506,7 @@ namespace pdr_search
   Layer::Layer(const Layer &l) : SetOfLiteralSets(l.sets, SetType::CLAUSE)
   {
   }
-  
+
   Layer::Layer(const std::set<LiteralSet> c) : SetOfLiteralSets(c, SetType::CLAUSE)
   {
     for (LiteralSet ls : c)
@@ -499,7 +515,7 @@ namespace pdr_search
       // assert(ls.is_unit());
     }
   }
-  
+
   Layer &Layer::operator=(const Layer &l)
   {
     sets = l.sets;
@@ -547,5 +563,45 @@ namespace pdr_search
     }
     assert(lnew.is_subset_eq_of(*this));
     return lnew;
+  }
+
+  void Layer::simplify()
+  {
+    LiteralSet intersection = LiteralSet(SetType::CLAUSE);
+    int i = 0;
+    for (LiteralSet literal_set : sets)
+    {
+      literal_set.simplify();
+      if (i == 0)
+      {
+        intersection = literal_set;
+      }
+      else
+      {
+        intersection = intersection.set_intersect(literal_set);
+      }
+      if (literal_set.size() <= 1) 
+      {
+        intersection = LiteralSet(SetType::CLAUSE);
+        break;
+      }
+      i += 1;
+    }
+    // if (intersection.size() > 0 && sets.size() > 1)
+    // {
+    //   std::cout << "common literals: " << intersection << std::endl;
+    //   for (LiteralSet ls : sets)
+    //   {
+    //     for (Literal l : intersection.get_literals())
+    //     {
+    //       std::cout << "remove literal" << l << std::endl;
+    //       sets.erase(ls);
+    //       ls.remove_literal(l);
+    //       sets.insert(ls);
+    //       std::cout << "out" << ls << std::endl;
+    //     }
+    //   }
+    //   add_set(intersection);
+    // }
   }
 }

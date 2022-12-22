@@ -396,6 +396,16 @@ namespace pdr_search
                 return SearchStatus::FAILED;
             }
         }
+
+        if (enable_layer_simplification)
+        {
+            for (int i = 0; get_layer(i)->size() != 0; i++)
+            {
+                // std::cout << "Layer L_" << i << ": " << *get_layer(i) << std::endl;
+                get_layer(i)->simplify();
+                // std::cout << "Layer L_" << i << ": " << *get_layer(i) << std::endl;
+            }
+        }
         return SearchStatus::IN_PROGRESS;
     }
 
@@ -524,6 +534,9 @@ namespace pdr_search
 
     PDRSearch::PDRSearch(const Options &opts) : SearchEngine(opts)
     {
+        enable_obligation_rescheduling = opts.get<bool>("ob-resched");
+        enable_layer_simplification = opts.get<bool>("s-layers");
+
         std::shared_ptr<PDRHeuristic> pdr_heuristic =
             opts.get<std::shared_ptr<PDRHeuristic>>("heuristic");
 
@@ -541,6 +554,8 @@ namespace pdr_search
             "heuristic",
             "pdr heuristic",
             "pdr-noop()");
+        parser.add_option<bool>("ob-resched", "enable obligation scheduling", "true");
+        parser.add_option<bool>("s-layers", "enable layer simplification", "false");
     }
 
     // helper method to print sets of SetOfliteralSets
