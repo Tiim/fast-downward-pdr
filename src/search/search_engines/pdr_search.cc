@@ -214,6 +214,7 @@ namespace pdr_search
             // std::cout << "Layer 0 (goal): " << l0 << std::endl;
             std::cout << "Layer 0 (goal) size: " << l0.size() << " clauses" << std::endl;
 
+            std::cout << "Initial Heuristic Layer " << 0 << ": " << l0 << std::endl;
             this->layers.insert(this->layers.end(), l0);
             return &layers[i];
         }
@@ -223,6 +224,17 @@ namespace pdr_search
             if (this->heuristic)
             {
                 l_i = this->heuristic->initial_heuristic_layer(i);
+                // asserts to make sure heuristic seed layer is valid.
+                for (auto s : l_i.get_sets())
+                {
+                    assert(s.is_clause());
+                    for (auto l : s.get_literals())
+                    {
+                        assert(l.is_positive());
+                    }
+                }
+
+                std::cout << "Initial Heuristic Layer " << i << ": " << l_i << std::endl;
             }
             // std::cout << "Layer " << i << ": " << l_i << std::endl;
             std::cout << "Layer " << i << " size: " << l_i.size() << " clauses" << std::endl;

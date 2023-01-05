@@ -34,6 +34,10 @@ namespace pdr_search
     }
     return variable < b.variable;
   }
+  bool Literal::is_positive() const
+  {
+    return positive;
+  }
   std::ostream &operator<<(std::ostream &os, const Literal &l)
   {
     auto name = l.fact.get_name();

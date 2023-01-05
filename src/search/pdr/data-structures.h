@@ -38,6 +38,7 @@ namespace pdr_search
     Literal &operator=(const Literal &l);
     bool operator==(const Literal &l) const;
     bool operator<(const Literal &b) const;
+    bool is_positive() const;
     friend std::ostream &operator<<(std::ostream &os, const Literal &l);
     Literal invert() const;
     Literal neg() const;

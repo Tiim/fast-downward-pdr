@@ -19,6 +19,8 @@ namespace pdr_search
       PatternDBPDRHeuristic(const options::Options &opts);
       Layer initial_heuristic_layer(int i);
 
+      LiteralSet from_projected_state(pdbs::Pattern pattern, std::vector<int> state);
+
       static std::shared_ptr<PDRHeuristic> parse(OptionParser &parser);
   };
 }

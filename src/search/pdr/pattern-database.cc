@@ -8,12 +8,11 @@ namespace pdr_search
 
     std::shared_ptr<pdbs::PatternGenerator> pattern_generator =
         opts.get<std::shared_ptr<pdbs::PatternGenerator>>("pattern");
-    
 
     pdbs::PatternInformation pattern_info = pattern_generator->generate(task);
 
     pattern_database = pattern_info.get_pdb();
-    
+
     auto pattern = pattern_database->get_pattern();
     auto variables = TaskProxy(*task).get_variables();
 
@@ -28,40 +27,33 @@ namespace pdr_search
     std::set<LiteralSet> states;
     std::vector<int> current_state(variables.size()); // is initialized with 0 values
 
-    // first variable in pattern with -1 so we can increment it to 0 in the next loop
+    // first variable in pattern with -1 so we can increment it to 0 in the loop
     current_state[pattern[0]] = -1;
 
     while (true)
     {
       // increment first pattern value
       current_state[pattern[0]] += 1;
-      bool done = false;
       // propagate value to next pattern values if it overflows.
-      for (size_t j = 0; j < pattern.size() - 1; j += 1)
+      for (size_t ptrnidx = 0; ptrnidx < pattern.size() - 1; ptrnidx += 1)
       {
-        if (current_state[pattern[j]] >= variables[pattern[j]].get_domain_size())
+        if (current_state[pattern[ptrnidx]] == variables[pattern[ptrnidx]].get_domain_size())
         {
-          current_state[pattern[j]] = 0;
-          current_state[pattern[j + 1]] += 1;
-          // if we reached the last variable in the pattern and it is already bigger than the domain
-          if (j == pattern.size() - 2 && pattern[pattern.size() - 1] >= variables[pattern.size() - 1].get_domain_size())
-          {
-            done = true;
-            break;
-          }
+          current_state[pattern[ptrnidx]] = 0;
+          current_state[pattern[ptrnidx + 1]] += 1;
         }
         else
         {
           break;
         }
       }
-      if (done)
+      if (current_state[pattern[pattern.size() - 1]] >= variables[pattern.size() - 1].get_domain_size())
       {
         break;
       }
 
       // Get the heuristic distance.
-      // Since the heuristic is admissible, the heuristic distance is always smaller or equal to the 
+      // Since the heuristic is admissible, the heuristic distance is always smaller or equal to the
       // real distance.
       int dist = pattern_database->get_value(current_state);
       // If the heuristic distance is <= than the current layer number i,
@@ -70,20 +62,38 @@ namespace pdr_search
       {
         // Strengthen the layer such that the abstract state of 'current_state'
         // can not model the layer.
-        LiteralSet ls = LiteralSet(SetType::CLAUSE);
-
-        for (size_t j = 0; j < pattern.size(); j += 1)
-        {
-          Literal l = Literal::from_fact(FactProxy(*task, pattern[j], current_state[pattern[j]]));
-          
-          // TODO: Layers should consist of non negative literals only. (Why?)
-          ls.add_literal(l.invert());
-        }
-
-        states.insert(states.end(), ls);
+        LiteralSet ls = from_projected_state(pattern, current_state);
+        states.insert(states.end(), ls.invert());
       }
     }
     return Layer(std::set<LiteralSet>(states));
+  }
+
+  LiteralSet PatternDBPDRHeuristic::from_projected_state(pdbs::Pattern pattern, std::vector<int> state)
+  {
+    LiteralSet positives = LiteralSet(SetType::CUBE);
+    LiteralSet negatives = LiteralSet(SetType::CUBE);
+    for (int varidx : pattern)
+    {
+      assert(varidx >= 0);
+      assert(state[varidx] < task_proxy.get_variables()[varidx].get_domain_size());
+      Literal l = Literal::from_fact(FactProxy(*task, varidx, state[varidx]));
+      positives.add_literal(l);
+    }
+    auto vars = this->task_proxy.get_variables();
+    for (auto varidx : pattern)
+    {
+      int dom_size = vars[varidx].get_domain_size();
+      for (int i = 0; i < dom_size; i++)
+      {
+        Literal l = Literal::from_fact(FactProxy(*task, varidx, i));
+        if (!positives.contains_literal(l))
+        {
+          negatives.add_literal(l.invert());
+        }
+      }
+    }
+    return negatives;
   }
 
   std::shared_ptr<PDRHeuristic> PatternDBPDRHeuristic::parse(OptionParser &parser)
@@ -94,7 +104,7 @@ namespace pdr_search
         "pattern generation method",
         "greedy()");
     PDRHeuristic::add_options_to_parser(parser);
-    
+
     Options opts = parser.parse();
 
     std::shared_ptr<PatternDBPDRHeuristic> heuristic;
