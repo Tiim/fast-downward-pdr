@@ -8,10 +8,10 @@ import project
 
 REPO = project.get_repo_base()
 BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
-SCP_LOGIN = "myname@myserver.com"
-REMOTE_REPOS_DIR = "/infai/seipp/projects"
+
 # If REVISION_CACHE is None, the default ./data/revision-cache is used.
 REVISION_CACHE = os.environ.get("DOWNWARD_REVISION_CACHE")
+
 if project.REMOTE:
     SUITE = project.SUITE_SATISFICING
     ENV = project.BaselSlurmEnvironment(email="my.name@myhost.ch")
@@ -19,6 +19,7 @@ else:
     SUITE = ["depot:p01.pddl", "grid:prob01.pddl", "gripper:prob01.pddl"]
     ENV = project.LocalEnvironment(processes=2)
 
+# TODO: change these to pdr
 CONFIGS = [
     (f"{index:02d}-{h_nick}", ["--search", f"eager_greedy([{h}])"])
     for index, (h_nick, h) in enumerate(
@@ -29,11 +30,15 @@ CONFIGS = [
         start=1,
     )
 ]
+
 BUILD_OPTIONS = []
-DRIVER_OPTIONS = ["--overall-time-limit", "5m"]
+DRIVER_OPTIONS = ["--overall-time-limit", "30m"]
+
+# TODO: change these
 REVS = [
-    ("main", "main"),
+    ("PDR-thesis", "pdr base"),
 ]
+
 ATTRIBUTES = [
     "error",
     "run_dir",
@@ -70,10 +75,6 @@ exp.add_parser(exp.PLANNER_PARSER)
 exp.add_step("build", exp.build)
 exp.add_step("start", exp.start_runs)
 exp.add_fetcher(name="fetch")
-
-if not project.REMOTE:
-    exp.add_step("remove-eval-dir", shutil.rmtree, exp.eval_dir, ignore_errors=True)
-    project.add_scp_step(exp, SCP_LOGIN, REMOTE_REPOS_DIR)
 
 project.add_absolute_report(
     exp, attributes=ATTRIBUTES, filter=[project.add_evaluations_per_time]
