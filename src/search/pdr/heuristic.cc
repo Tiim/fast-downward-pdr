@@ -32,7 +32,7 @@ namespace pdr_search
 
   std::shared_ptr<Layer> NoopPDRHeuristic::initial_heuristic_layer(int, std::shared_ptr<Layer> parent)
   {
-    return std::shared_ptr<Layer>(new Layer(parent));
+    return std::shared_ptr<Layer>(new Layer(nullptr, parent));
   }
 
   std::shared_ptr<PDRHeuristic> NoopPDRHeuristic::parse(OptionParser &parser)

@@ -204,7 +204,7 @@ namespace pdr_search
         else if (i == 0)
         {
             // no parent layer -> nullptr
-            std::shared_ptr<Layer> l0 = std::shared_ptr<Layer>(new Layer(nullptr));
+            std::shared_ptr<Layer> l0 = std::shared_ptr<Layer>(new Layer(nullptr, nullptr));
             auto g = this->task_proxy.get_goals();
             for (size_t i = 0; i < g.size(); i++)
             {
@@ -221,10 +221,11 @@ namespace pdr_search
         }
         else
         {
-            std::shared_ptr<Layer> l_i = std::shared_ptr<Layer>(new Layer(get_layer(i-1)));
+            std::shared_ptr<Layer> parent = get_layer(i-1);
+            std::shared_ptr<Layer> l_i = std::shared_ptr<Layer>(new Layer(nullptr, parent));
             if (this->heuristic)
             {
-                l_i = this->heuristic->initial_heuristic_layer(i, get_layer(i-1));
+                l_i = this->heuristic->initial_heuristic_layer(i, parent);
                 // asserts to make sure heuristic seed layer is valid.
                 for (auto s : l_i->get_sets())
                 {
@@ -240,6 +241,7 @@ namespace pdr_search
             // std::cout << "Layer " << i << ": " << l_i << std::endl;
             //std::cout << "Layer " << i << " size: " << l_i.size() << " clauses" << std::endl;
 
+            parent->set_child(l_i);
             this->layers.insert(this->layers.end(), l_i);
             return layers[i];
         }
@@ -333,13 +335,16 @@ namespace pdr_search
                     // line 14 extend returns a reason r
                     LiteralSet r = extended.first;
                     // line 15
-                    for (int j = 0; j <= i; j++)
-                    {
-                        auto L_j = get_layer(j);
+                    // Only add to set L_i, because of layer delta encoding
+                    auto L_i = get_layer(i);
+                    L_i->add_set(r.invert());
+                    //for (int j = 0; j <= i; j++)
+                    //{
+                    //    auto L_j = get_layer(j);
                         // std::cout << "15: Push clause to L_" << j << ": c = " << r.invert() << std::endl;
-                        L_j->add_set(r.invert());
+                    //    L_j->add_set(r.invert());
                         // std::cout << "15: L_" << j << " = " << *L_j << std::endl;
-                    }
+                    //}
 
                     // line 18 obligation rescheduling
                     if (enable_obligation_rescheduling && i < k)
@@ -362,10 +367,9 @@ namespace pdr_search
             // std::cout << "22: foreach i = " << i << " of " << k + 1 << std::endl;
             // line 23
             auto Li1 = *get_layer(i - 1);
-            auto Li = *get_layer(i);
             // std::cout << "22: L_" << (i-1) << " = " << Li1 << std::endl;
             // std::cout << "22: L_" << i << " = " << Li << std::endl;
-            for (auto c : Li1.set_minus(Li).get_sets())
+            for (auto c : Li1.get_delta())
             {
                 // std::cout << "23: foreach c in L_" << (i - 1) << " \\ L_" << i << std::endl;
                 // std::cout << "25: c = " << c << std::endl;

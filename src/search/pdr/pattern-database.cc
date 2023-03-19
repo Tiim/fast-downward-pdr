@@ -77,7 +77,7 @@ namespace pdr_search
         clauses.insert(ls.invert());
       }
     }
-    return std::shared_ptr<Layer>(new Layer(std::set<LiteralSet>(clauses), parent));
+    return std::shared_ptr<Layer>(new Layer(std::set<LiteralSet>(clauses), nullptr, parent));
   }
 
   LiteralSet PatternDBPDRHeuristic::from_projected_state(pdbs::Pattern pattern, std::vector<int> state)

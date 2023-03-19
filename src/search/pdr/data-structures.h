@@ -135,9 +135,9 @@ namespace pdr_search
     bool operator<(const SetOfLiteralSets &s) const;
     friend std::ostream &operator<<(std::ostream &os, const SetOfLiteralSets &l);
     size_t size() const;
-    const std::set<LiteralSet> get_sets() const;
+    virtual const std::set<LiteralSet> get_sets() const;
     virtual void add_set(LiteralSet s);
-    bool contains_set(LiteralSet s) const;
+    virtual bool contains_set(LiteralSet s) const;
     bool is_subset_eq_of(const SetOfLiteralSets &s) const;
     SetOfLiteralSets set_minus(const SetOfLiteralSets &s) const;
   };
@@ -146,15 +146,24 @@ namespace pdr_search
   {
   private:
      std::shared_ptr<Layer> parent;
+     std::shared_ptr<Layer> child;
   public:
-    Layer(std::shared_ptr<Layer> parent);
+    Layer(std::shared_ptr<Layer> child, std::shared_ptr<Layer> parent);
     Layer(const Layer &l);
-    Layer(const std::set<LiteralSet> clauses, std::shared_ptr<Layer> parent);
+    Layer(const std::set<LiteralSet> clauses,std::shared_ptr<Layer> child, std::shared_ptr<Layer> parent);
     Layer &operator=(const Layer &l);
     friend std::ostream &operator<<(std::ostream &os, const Layer &l);
+    void set_child(std::shared_ptr<Layer> c);
+
+    const std::set<LiteralSet> get_sets() const;
+    // Automatically adds the set also to the parents of the set (L_{j}) for j = 0,...,i-1
+    // See Suda, 3.6.1 Representation of the Layers
     void add_set(LiteralSet c);
+    bool contains_set(LiteralSet s) const;
     // Lₜₕᵢₛ ∖ Lₗ
     Layer set_minus(const Layer &l) const;
+    // Returns a list of literal sets that are in the current layer but not in its child layer.
+    std::set<LiteralSet> get_delta() const;
 
     void simplify();
   };

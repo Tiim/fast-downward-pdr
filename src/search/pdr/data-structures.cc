@@ -503,15 +503,15 @@ namespace pdr_search
     return lnew;
   }
 
-  Layer::Layer(std::shared_ptr<Layer> p) : SetOfLiteralSets(std::set<LiteralSet>(), SetType::CLAUSE), parent(p) 
+  Layer::Layer(std::shared_ptr<Layer> c, std::shared_ptr<Layer> p) : SetOfLiteralSets(std::set<LiteralSet>(), SetType::CLAUSE), parent(p), child(c)
   {
   }
 
-  Layer::Layer(const Layer &l) : SetOfLiteralSets(l.sets, SetType::CLAUSE), parent(l.parent)
+  Layer::Layer(const Layer &l) : SetOfLiteralSets(l.sets, SetType::CLAUSE), child(l.child), parent(l.parent)
   {
   }
 
-  Layer::Layer(const std::set<LiteralSet> c, std::shared_ptr<Layer> p ) : SetOfLiteralSets(c, SetType::CLAUSE), parent(p)
+  Layer::Layer(const std::set<LiteralSet> c,std::shared_ptr<Layer> ci, std::shared_ptr<Layer> p ) : SetOfLiteralSets(c, SetType::CLAUSE), parent(p), child(ci)
   {
     for (LiteralSet ls : c)
     {
@@ -524,6 +524,7 @@ namespace pdr_search
   {
     sets = l.sets;
     parent = l.parent;
+    child = l.child;
     return *this;
   }
 
@@ -547,27 +548,57 @@ namespace pdr_search
     return os;
   }
 
+  void Layer::set_child(std::shared_ptr<Layer> c)
+  {
+      this->child = c;
+  }
+
+  const std::set<LiteralSet> Layer::get_sets() const 
+  {
+    std::set<LiteralSet> sets;
+    for (LiteralSet s : this->sets) {
+        sets.insert(s);
+    }
+    std::shared_ptr<Layer> child = this->child;
+    while (child != nullptr) {
+        for (LiteralSet s : this->sets) {
+            sets.insert(s);
+        }
+        child = child->child;
+    }
+    return sets;
+  }
+
   void Layer::add_set(LiteralSet c)
   {
+    // TODO: make sure no parent layer contains this literal set
     assert(c.is_clause());
     this->sets.insert(c);
+
+    std::shared_ptr<Layer> parent = this->parent;
+    while (parent != nullptr) {
+        auto res = parent->sets.find(c);
+        bool contains = res != this->sets.end();
+        if (contains) {
+            parent->sets.erase(c);
+        }
+        parent = parent->parent;
+    }
+  }
+
+  bool Layer::contains_set(LiteralSet s) const
+  {
+      throw "Not implemented, Layer has no operator contains_set";
   }
 
   Layer Layer::set_minus(const Layer &l) const
   {
-    std::set<LiteralSet> result;
-    set_difference(
-        this->sets.begin(), this->sets.end(),
-        l.sets.begin(), l.sets.end(),
-        inserter(result, result.end()));
+      throw "Not implemented, Layer does not have set_minus";
+  }
 
-    Layer lnew = Layer(this->parent);
-    for (auto clause : result)
-    {
-      lnew.add_set(clause);
-    }
-    assert(lnew.is_subset_eq_of(*this));
-    return lnew;
+  std::set<LiteralSet> Layer::get_delta() const 
+  {
+      return this->sets;
   }
 
   void Layer::simplify()
@@ -592,21 +623,5 @@ namespace pdr_search
       }
       i += 1;
     }
-    // if (intersection.size() > 0 && sets.size() > 1)
-    // {
-    //   std::cout << "common literals: " << intersection << std::endl;
-    //   for (LiteralSet ls : sets)
-    //   {
-    //     for (Literal l : intersection.get_literals())
-    //     {
-    //       std::cout << "remove literal" << l << std::endl;
-    //       sets.erase(ls);
-    //       ls.remove_literal(l);
-    //       sets.insert(ls);
-    //       std::cout << "out" << ls << std::endl;
-    //     }
-    //   }
-    //   add_set(intersection);
-    // }
   }
 }
