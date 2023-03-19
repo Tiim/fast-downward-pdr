@@ -28,10 +28,10 @@ namespace pdr_search
         bool enable_layer_simplification = false;
 
         std::shared_ptr<PDRHeuristic> heuristic;
-        std::vector<Layer> layers;
+        std::vector<std::shared_ptr<Layer>> layers;
         int iteration = 0;
 
-        Layer *get_layer(long unsigned int i);
+        std::shared_ptr<Layer> get_layer(long unsigned int i);
 
         // Returns (t, true) where t is successor state
         // or (r, false) where r is reason

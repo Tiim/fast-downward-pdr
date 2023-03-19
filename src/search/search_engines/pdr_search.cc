@@ -193,39 +193,40 @@ namespace pdr_search
         return std::pair<LiteralSet, bool>(r, false);
     }
 
-    Layer *PDRSearch::get_layer(long unsigned int i)
+    std::shared_ptr<Layer> PDRSearch::get_layer(long unsigned int i)
     {
         assert(i <= layers.size() + 1);
 
         if (layers.size() > i)
         {
-            return &layers[i];
+            return layers[i];
         }
         else if (i == 0)
         {
-            Layer l0 = Layer();
+            // no parent layer -> nullptr
+            std::shared_ptr<Layer> l0 = std::shared_ptr<Layer>(new Layer(nullptr));
             auto g = this->task_proxy.get_goals();
             for (size_t i = 0; i < g.size(); i++)
             {
                 // no need to add the other literals as inverse,
                 // the goal is only a partial assignment.
-                l0.add_set(LiteralSet(Literal::from_fact(g[i]), SetType::CLAUSE));
+                l0->add_set(LiteralSet(Literal::from_fact(g[i]), SetType::CLAUSE));
             }
             // std::cout << "Layer 0 (goal): " << l0 << std::endl;
-            std::cout << "Layer 0 (goal) size: " << l0.size() << " clauses" << std::endl;
+            std::cout << "Layer 0 (goal) size: " << l0->size() << " clauses" << std::endl;
 
             //std::cout << "Initial Heuristic Layer " << 0 << ": " << l0 << std::endl;
             this->layers.insert(this->layers.end(), l0);
-            return &layers[i];
+            return layers[i];
         }
         else
         {
-            Layer l_i = Layer();
+            std::shared_ptr<Layer> l_i = std::shared_ptr<Layer>(new Layer(get_layer(i-1)));
             if (this->heuristic)
             {
-                l_i = this->heuristic->initial_heuristic_layer(i);
+                l_i = this->heuristic->initial_heuristic_layer(i, get_layer(i-1));
                 // asserts to make sure heuristic seed layer is valid.
-                for (auto s : l_i.get_sets())
+                for (auto s : l_i->get_sets())
                 {
                     assert(s.is_clause());
                     for (auto l : s.get_literals())
@@ -240,7 +241,7 @@ namespace pdr_search
             //std::cout << "Layer " << i << " size: " << l_i.size() << " clauses" << std::endl;
 
             this->layers.insert(this->layers.end(), l_i);
-            return &layers[i];
+            return layers[i];
         }
     }
 

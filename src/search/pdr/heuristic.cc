@@ -1,5 +1,6 @@
 #include "heuristic.h"
 #include "../plugin.h"
+#include <memory>
 
 namespace pdr_search
 {
@@ -29,9 +30,9 @@ namespace pdr_search
   {
   }
 
-  Layer NoopPDRHeuristic::initial_heuristic_layer(int)
+  std::shared_ptr<Layer> NoopPDRHeuristic::initial_heuristic_layer(int, std::shared_ptr<Layer> parent)
   {
-    return Layer();
+    return std::shared_ptr<Layer>(new Layer(parent));
   }
 
   std::shared_ptr<PDRHeuristic> NoopPDRHeuristic::parse(OptionParser &parser)

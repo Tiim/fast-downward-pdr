@@ -1,5 +1,6 @@
 #include "pattern-database.h"
 #include "../plugin.h"
+#include <memory>
 
 namespace pdr_search
 {
@@ -19,7 +20,7 @@ namespace pdr_search
     std::cout << "Pattern size: " << pattern.size() << ", Variables: " << variables.size() << std::endl;
   }
 
-  Layer pdr_search::PatternDBPDRHeuristic::initial_heuristic_layer(int i)
+  std::shared_ptr<Layer> pdr_search::PatternDBPDRHeuristic::initial_heuristic_layer(int i, std::shared_ptr<Layer> parent)
   {
     auto task_proxy = TaskProxy(*task);
     auto pattern = pattern_database->get_pattern();
@@ -76,7 +77,7 @@ namespace pdr_search
         clauses.insert(ls.invert());
       }
     }
-    return Layer(std::set<LiteralSet>(clauses));
+    return std::shared_ptr<Layer>(new Layer(std::set<LiteralSet>(clauses), parent));
   }
 
   LiteralSet PatternDBPDRHeuristic::from_projected_state(pdbs::Pattern pattern, std::vector<int> state)

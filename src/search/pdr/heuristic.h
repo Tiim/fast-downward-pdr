@@ -4,6 +4,7 @@
 #include "data-structures.h"
 #include "../options/options.h"
 #include "../option_parser.h"
+#include <memory>
 
 namespace options
 {
@@ -25,7 +26,7 @@ namespace pdr_search
   public:
     PDRHeuristic(const options::Options &opts);
     virtual ~PDRHeuristic();
-    virtual Layer initial_heuristic_layer(int i) = 0;
+    virtual std::shared_ptr<Layer> initial_heuristic_layer(int i, std::shared_ptr<Layer> parent) = 0;
 
     static void add_options_to_parser(OptionParser &parser);
   };
@@ -35,7 +36,7 @@ namespace pdr_search
   public:
     NoopPDRHeuristic(const options::Options &opts);
     ~NoopPDRHeuristic();
-    Layer initial_heuristic_layer(int i);
+    virtual std::shared_ptr<Layer> initial_heuristic_layer(int i, std::shared_ptr<Layer> parent);
     static std::shared_ptr<PDRHeuristic> parse(OptionParser &parser);
   };
 

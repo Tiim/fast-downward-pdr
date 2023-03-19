@@ -503,15 +503,15 @@ namespace pdr_search
     return lnew;
   }
 
-  Layer::Layer() : SetOfLiteralSets(std::set<LiteralSet>(), SetType::CLAUSE)
+  Layer::Layer(std::shared_ptr<Layer> p) : SetOfLiteralSets(std::set<LiteralSet>(), SetType::CLAUSE), parent(p) 
   {
   }
 
-  Layer::Layer(const Layer &l) : SetOfLiteralSets(l.sets, SetType::CLAUSE)
+  Layer::Layer(const Layer &l) : SetOfLiteralSets(l.sets, SetType::CLAUSE), parent(l.parent)
   {
   }
 
-  Layer::Layer(const std::set<LiteralSet> c) : SetOfLiteralSets(c, SetType::CLAUSE)
+  Layer::Layer(const std::set<LiteralSet> c, std::shared_ptr<Layer> p ) : SetOfLiteralSets(c, SetType::CLAUSE), parent(p)
   {
     for (LiteralSet ls : c)
     {
@@ -523,6 +523,7 @@ namespace pdr_search
   Layer &Layer::operator=(const Layer &l)
   {
     sets = l.sets;
+    parent = l.parent;
     return *this;
   }
 
@@ -560,7 +561,7 @@ namespace pdr_search
         l.sets.begin(), l.sets.end(),
         inserter(result, result.end()));
 
-    Layer lnew = Layer();
+    Layer lnew = Layer(this->parent);
     for (auto clause : result)
     {
       lnew.add_set(clause);

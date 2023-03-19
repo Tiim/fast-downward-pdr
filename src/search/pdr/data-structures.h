@@ -145,10 +145,11 @@ namespace pdr_search
   class Layer : public SetOfLiteralSets
   {
   private:
+     std::shared_ptr<Layer> parent;
   public:
-    Layer();
+    Layer(std::shared_ptr<Layer> parent);
     Layer(const Layer &l);
-    Layer(const std::set<LiteralSet> clauses);
+    Layer(const std::set<LiteralSet> clauses, std::shared_ptr<Layer> parent);
     Layer &operator=(const Layer &l);
     friend std::ostream &operator<<(std::ostream &os, const Layer &l);
     void add_set(LiteralSet c);

@@ -6,6 +6,7 @@
 #include "../pdbs/pattern_information.h"
 #include "../pdbs/pattern_generator.h"
 #include "../option_parser.h"
+#include <memory>
 
 namespace pdr_search
 {
@@ -17,7 +18,7 @@ namespace pdr_search
 
     public:
       PatternDBPDRHeuristic(const options::Options &opts);
-      Layer initial_heuristic_layer(int i);
+      std::shared_ptr<Layer> initial_heuristic_layer(int i, std::shared_ptr<Layer> parent);
 
       LiteralSet from_projected_state(pdbs::Pattern pattern, std::vector<int> state);
 
