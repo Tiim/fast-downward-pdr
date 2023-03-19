@@ -494,7 +494,7 @@ namespace pdr_search
         l.sets.begin(), l.sets.end(),
         inserter(result, result.end()));
 
-    Layer lnew = Layer();
+    SetOfLiteralSets lnew = SetOfLiteralSets();
     for (auto clause : result)
     {
       lnew.add_set(clause);
