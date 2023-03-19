@@ -24,21 +24,26 @@ namespace pdr_search
     auto task_proxy = TaskProxy(*task);
     auto pattern = pattern_database->get_pattern();
     auto variables = task_proxy.get_variables();
-    std::set<LiteralSet> states;
+    std::set<LiteralSet> clauses;
     std::vector<int> current_state(variables.size()); // is initialized with 0 values
 
     // first variable in pattern with -1 so we can increment it to 0 in the loop
     current_state[pattern[0]] = -1;
+    bool done = false;
 
-    while (true)
+    while (!done)
     {
       // increment first pattern value
       current_state[pattern[0]] += 1;
       // propagate value to next pattern values if it overflows.
-      for (size_t ptrnidx = 0; ptrnidx < pattern.size() - 1; ptrnidx += 1)
+      for (size_t ptrnidx = 0; ptrnidx < pattern.size(); ptrnidx += 1)
       {
         if (current_state[pattern[ptrnidx]] == variables[pattern[ptrnidx]].get_domain_size())
         {
+          if (ptrnidx >= pattern.size() -1) {
+            done = true;
+            break;
+          }
           current_state[pattern[ptrnidx]] = 0;
           current_state[pattern[ptrnidx + 1]] += 1;
         }
@@ -47,10 +52,15 @@ namespace pdr_search
           break;
         }
       }
-      if (current_state[pattern[pattern.size() - 1]] >= variables[pattern.size() - 1].get_domain_size())
-      {
+      if (done) {
         break;
       }
+
+      std::cout << "State: ";
+      for (size_t i=0; i < current_state.size(); i+=1) {
+        std::cout << "("<< i << "," << current_state[i] << ")";
+      }
+      std::cout << std::endl;
 
       // Get the heuristic distance.
       // Since the heuristic is admissible, the heuristic distance is always smaller or equal to the
@@ -63,10 +73,10 @@ namespace pdr_search
         // Strengthen the layer such that the abstract state of 'current_state'
         // can not model the layer.
         LiteralSet ls = from_projected_state(pattern, current_state);
-        states.insert(states.end(), ls.invert());
+        clauses.insert(ls.invert());
       }
     }
-    return Layer(std::set<LiteralSet>(states));
+    return Layer(std::set<LiteralSet>(clauses));
   }
 
   LiteralSet PatternDBPDRHeuristic::from_projected_state(pdbs::Pattern pattern, std::vector<int> state)
