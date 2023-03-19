@@ -296,7 +296,10 @@ namespace pdr_search
                 // line 8
                 auto si = Q.top();
                 Q.pop();
-                // std::cout << "8: Pop obligation from queue: (s, i) = " << *si << std::endl;
+                std::cout << "8: Pop obligation from queue: (s, i) = " << *si << std::endl;
+                if (si->get_parent()) {
+                    std::cout << "8: Parent = " << *(si->get_parent()) << std::endl;
+                }
                 int i = si->get_priority();
                 auto s = si->get_state();
                 // line 9
