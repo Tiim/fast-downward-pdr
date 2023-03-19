@@ -296,9 +296,9 @@ namespace pdr_search
                 // line 8
                 auto si = Q.top();
                 Q.pop();
-                std::cout << "8: Pop obligation from queue: (s, i) = " << *si << std::endl;
+                //std::cout << "8: Pop obligation from queue: (s, i) = " << *si << std::endl;
                 if (si->get_parent()) {
-                    std::cout << "8: Parent = " << *(si->get_parent()) << std::endl;
+                    //std::cout << "8: Parent = " << *(si->get_parent()) << std::endl;
                 }
                 int i = si->get_priority();
                 auto s = si->get_state();
@@ -455,7 +455,7 @@ namespace pdr_search
                     continue;
                 }
                 matched_op = OperatorID(op.get_id());
-                std::cout << "Step " << i << " - matching operator " << op.get_name() << std::endl;
+                //std::cout << "Step " << i << " - matching operator " << op.get_name() << std::endl;
             }
             assert(matched_op != OperatorID::no_operator);
             plan.insert(plan.end(), matched_op);
