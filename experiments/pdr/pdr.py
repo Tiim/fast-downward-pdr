@@ -12,11 +12,16 @@ BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
 # If REVISION_CACHE is None, the default ./data/revision-cache is used.
 REVISION_CACHE = os.environ.get("DOWNWARD_REVISION_CACHE")
 
-if project.REMOTE:
-    SUITE = project.SUITE_SATISFICING
-    ENV = project.BaselSlurmEnvironment(email="my.name@myhost.ch")
+SUITE_NAME = "small"
+#SUITE_NAME = "full"
+
+
+
+if SUITE_NAME == "full":
+    SUITE = project.SUITE_UNIT_COST
+    ENV = project.BaselSlurmEnvironment(email="tim.bachmann@stud.unibas.ch")
 else:
-    SUITE = ["depot:p01.pddl", "grid:prob01.pddl", "gripper:prob01.pddl"]
+    SUITE = project.SUITE_UNIT_COST[:3]
     ENV = project.LocalEnvironment(processes=2)
 
 # TODO: change these to pdr

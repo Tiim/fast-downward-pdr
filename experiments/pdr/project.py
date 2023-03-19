@@ -205,7 +205,11 @@ DOMAIN_GROUPS = {
     "spider": ["spider", "spider-opt18-strips", "spider-sat18-strips"],
     "termes": ["termes", "termes-opt18-strips", "termes-sat18-strips"],
 }
+
+SUITE_UNIT_COST = ["airport", "barman-opt14-strips", "blocks", "childsnack-opt14-strips", "depot", "driverlog", "freecell", "grid", "gripper", "hiking-opt14-strips", "logistics00", "logistics98", "miconic", "movie", "mprime", "mystery", "nomystery-opt11-strips", "openstacks-strips", "organic-synthesis-opt18-strips", "parking-opt11-strips", "parking-opt14-strips", "pathways", "pipesworld-notankage", "pipesworld-tankage", "psr-small", "rovers", "satellite", "snake-opt18-strips", "storage", "termes-opt18-strips", "tidybot-opt11-strips", "tidybot-opt14-strips", "tpp", "trucks-strips", "visitall-opt11-strips", "visitall-opt14-strips", "zenotravel"]
+
 # fmt: on
+
 
 
 DOMAIN_RENAMINGS = {}
