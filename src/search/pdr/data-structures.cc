@@ -571,18 +571,13 @@ namespace pdr_search
 
   void Layer::add_set(LiteralSet c)
   {
-    // TODO: make sure no parent layer contains this literal set
     assert(c.is_clause());
     this->sets.insert(c);
 
     std::shared_ptr<Layer> parent = this->parent;
-    while (parent != nullptr) {
-        auto res = parent->sets.find(c);
-        bool contains = res != this->sets.end();
-        if (contains) {
-            parent->sets.erase(c);
-        }
-        parent = parent->parent;
+    if (parent != nullptr) {
+        // all "grandparents" should not have this literal set anymore
+        parent->sets.erase(c);
     }
   }
 
@@ -591,6 +586,14 @@ namespace pdr_search
       throw "Not implemented, Layer has no operator contains_set";
   }
 
+  bool Layer::is_subset_eq_of(const SetOfLiteralSets &s) const 
+  {
+      throw "Not implemented, Layer has no operator is_subset_eq_of";
+  }
+  SetOfLiteralSets Layer::set_minus(const SetOfLiteralSets &s) const 
+  {
+      throw "Not implemented, Layer has no operator set_minus";
+  }
   Layer Layer::set_minus(const Layer &l) const
   {
       throw "Not implemented, Layer does not have set_minus";
@@ -603,7 +606,7 @@ namespace pdr_search
 
   void Layer::simplify()
   {
-    LiteralSet intersection = LiteralSet(SetType::CLAUSE);
+    /*LiteralSet intersection = LiteralSet(SetType::CLAUSE);
     int i = 0;
     for (LiteralSet literal_set : sets)
     {
@@ -622,6 +625,6 @@ namespace pdr_search
         break;
       }
       i += 1;
-    }
+    }*/
   }
 }

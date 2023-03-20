@@ -138,8 +138,8 @@ namespace pdr_search
     virtual const std::set<LiteralSet> get_sets() const;
     virtual void add_set(LiteralSet s);
     virtual bool contains_set(LiteralSet s) const;
-    bool is_subset_eq_of(const SetOfLiteralSets &s) const;
-    SetOfLiteralSets set_minus(const SetOfLiteralSets &s) const;
+    virtual bool is_subset_eq_of(const SetOfLiteralSets &s) const;
+    virtual SetOfLiteralSets set_minus(const SetOfLiteralSets &s) const;
   };
 
   class Layer : public SetOfLiteralSets
@@ -160,6 +160,8 @@ namespace pdr_search
     // See Suda, 3.6.1 Representation of the Layers
     void add_set(LiteralSet c);
     bool contains_set(LiteralSet s) const;
+    bool is_subset_eq_of(const SetOfLiteralSets &s) const;
+    SetOfLiteralSets set_minus(const SetOfLiteralSets &s) const;
     // Lₜₕᵢₛ ∖ Lₗ
     Layer set_minus(const Layer &l) const;
     // Returns a list of literal sets that are in the current layer but not in its child layer.
