@@ -555,10 +555,8 @@ namespace pdr_search
 
   const std::set<LiteralSet> Layer::get_sets() const 
   {
-    std::set<LiteralSet> sets;
-    for (LiteralSet s : this->sets) {
-        sets.insert(s);
-    }
+    // TODO: something is broken here
+    std::set<LiteralSet> sets(this->sets);
     std::shared_ptr<Layer> child = this->child;
     while (child != nullptr) {
         for (LiteralSet s : this->sets) {
@@ -573,6 +571,14 @@ namespace pdr_search
   {
     assert(c.is_clause());
     this->sets.insert(c);
+
+    // don't do anything if child layer already has the literalset
+    std::shared_ptr<Layer> child = this->child;
+    if (child != nullptr) {
+        if (child->contains_set(c)) {
+            return;
+        }
+    }
 
     std::shared_ptr<Layer> parent = this->parent;
     if (parent != nullptr) {
