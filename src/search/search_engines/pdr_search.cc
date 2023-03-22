@@ -272,6 +272,15 @@ namespace pdr_search
         std::cout << "Step " << iteration << " of PDR search" << std::endl;
         // std::cout << "------------------" << std::endl;
 
+        if (iteration == 4) {
+            int i = 0;
+            for (auto layer : this->layers) {
+                std::cout<< "LAYER " << i++ << std::endl;
+                std::cout<< *layer << std::endl;
+                std::cout << "------" << std::endl;
+            }
+        }
+
         auto X = all_variables();
 
         // line 3

@@ -532,7 +532,7 @@ namespace pdr_search
   {
     os << COLOR_CYAN "Layer{";
     bool first = true;
-    for (auto c : l.sets)
+    for (auto c : l.get_sets())
     {
       if (first)
       {
@@ -570,21 +570,31 @@ namespace pdr_search
   void Layer::add_set(LiteralSet c)
   {
     assert(c.is_clause());
-    this->sets.insert(c);
 
-    // don't do anything if child layer already has the literalset
-    std::shared_ptr<Layer> child = this->child;
-    if (child != nullptr) {
-        if (child->contains_set(c)) {
-            return;
+    // don't insert if current or child layer already has the literalset
+    bool child_already_has_set = false;
+    Layer* child = this;
+    while (child != nullptr) {
+        auto sets = get_sets();
+        if (sets.find(c) != sets.end()) {
+            child_already_has_set = true;
+        }
+        child = child->child.get();
+    }
+    if (!child_already_has_set) {
+        this->sets.insert(c);
+        
+        // erase from all parent layers
+        std::shared_ptr<Layer> parent = this->parent;
+        while (parent != nullptr) {
+            parent->sets.erase(c);
+            parent = parent->parent;
         }
     }
 
-    std::shared_ptr<Layer> parent = this->parent;
-    if (parent != nullptr) {
-        // all "grandparents" should not have this literal set anymore
-        parent->sets.erase(c);
-    }
+    //TODO: remove this for performance
+    auto all_sets = get_sets();
+    assert(all_sets.find(c) != all_sets.end());
   }
 
   bool Layer::contains_set(LiteralSet s) const
