@@ -270,6 +270,11 @@ namespace pdr_search
         std::cout << "Step " << iteration << " of PDR search" << std::endl;
         // std::cout << "------------------" << std::endl;
 
+        for (int i = 0; i < layers.size() -1; ++i) {
+            assert(layers[i+1]->is_subset_eq_of(*layers[i]));
+        }
+        
+
         auto X = all_variables();
 
         // line 3
