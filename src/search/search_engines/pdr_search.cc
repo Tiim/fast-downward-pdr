@@ -418,7 +418,7 @@ namespace pdr_search
                     // std::cout << "27: Push clause to L_" << i << ": c = " << c << ", L = " << *get_layer(i) << std::endl;
                 }
             }
-            if (*get_layer(i - 1) == *get_layer(i))
+            if (get_layer(i-1)->get_delta().empty())
             {
                 // line 30
                 // std::cout << "30: No plan possible" << std::endl;

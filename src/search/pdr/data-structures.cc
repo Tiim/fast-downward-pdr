@@ -396,7 +396,7 @@ namespace pdr_search
   SetOfLiteralSets::SetOfLiteralSets(SetType type) : set_type(type)
   {
   }
-  SetOfLiteralSets::SetOfLiteralSets(const SetOfLiteralSets &s) : set_type(s.set_type), sets(s.sets)
+  SetOfLiteralSets::SetOfLiteralSets(const SetOfLiteralSets &s) : set_type(s.set_type), sets(s.get_sets())
   {
   }
   SetOfLiteralSets::SetOfLiteralSets(const std::set<LiteralSet> s, SetType type) : set_type(type), sets(s)
@@ -412,28 +412,28 @@ namespace pdr_search
   SetOfLiteralSets &SetOfLiteralSets::operator=(const SetOfLiteralSets &s)
   {
     set_type = s.set_type;
-    sets = s.sets;
+    sets = s.get_sets();
     return *this;
   }
 
   bool SetOfLiteralSets::operator==(const SetOfLiteralSets &s) const
   {
-    return set_type == s.set_type && sets == s.sets;
+    return set_type == s.set_type && get_sets() == s.get_sets();
   }
   bool SetOfLiteralSets::operator<(const SetOfLiteralSets &s) const
   {
     assert(set_type == s.set_type);
-    if (sets.size() == s.sets.size())
+    if (get_sets().size() == s.get_sets().size())
     {
-      return sets < s.sets;
+      return get_sets() < s.get_sets();
     }
-    return sets.size() < s.sets.size();
+    return get_sets().size() < s.get_sets().size();
   }
   std::ostream &operator<<(std::ostream &os, const SetOfLiteralSets &s)
   {
     os << COLOR_CYAN "Set{";
     bool first = true;
-    for (auto c : s.sets)
+    for (auto c : s.get_sets())
     {
       if (first)
       {
@@ -450,7 +450,7 @@ namespace pdr_search
   }
   size_t SetOfLiteralSets::size() const
   {
-    return sets.size();
+    return get_sets().size();
   }
 
   const std::set<LiteralSet> SetOfLiteralSets::get_sets() const
@@ -466,8 +466,9 @@ namespace pdr_search
 
   bool SetOfLiteralSets::contains_set(LiteralSet c) const
   {
-    auto res = this->sets.find(c);
-    return res != this->sets.end();
+    auto s = this->get_sets();
+    auto res = s.find(c);
+    return res != s.end();
   }
 
   bool SetOfLiteralSets::is_subset_eq_of(const SetOfLiteralSets &s) const
@@ -476,7 +477,7 @@ namespace pdr_search
     {
       return false;
     }
-    for (LiteralSet c : this->sets)
+    for (LiteralSet c : this->get_sets())
     {
       if (!s.contains_set(c))
       {
@@ -488,10 +489,12 @@ namespace pdr_search
 
   SetOfLiteralSets SetOfLiteralSets::set_minus(const SetOfLiteralSets &l) const
   {
+    auto se = get_sets();
+    auto lse = l.get_sets();
     std::set<LiteralSet> result;
     set_difference(
-        this->sets.begin(), this->sets.end(),
-        l.sets.begin(), l.sets.end(),
+        se.begin(), se.end(),
+        lse.begin(), lse.end(),
         inserter(result, result.end()));
 
     SetOfLiteralSets lnew = SetOfLiteralSets();
@@ -597,23 +600,6 @@ namespace pdr_search
     assert(all_sets.find(c) != all_sets.end());
   }
 
-  bool Layer::contains_set(LiteralSet s) const
-  {
-      throw "Not implemented, Layer has no operator contains_set";
-  }
-
-  bool Layer::is_subset_eq_of(const SetOfLiteralSets &s) const 
-  {
-      throw "Not implemented, Layer has no operator is_subset_eq_of";
-  }
-  SetOfLiteralSets Layer::set_minus(const SetOfLiteralSets &s) const 
-  {
-      throw "Not implemented, Layer has no operator set_minus";
-  }
-  Layer Layer::set_minus(const Layer &l) const
-  {
-      throw "Not implemented, Layer does not have set_minus";
-  }
 
   std::set<LiteralSet> Layer::get_delta() const 
   {
