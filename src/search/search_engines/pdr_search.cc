@@ -204,7 +204,7 @@ namespace pdr_search
         else if (i == 0)
         {
             // no parent layer -> nullptr
-            std::shared_ptr<Layer> l0 = std::shared_ptr<Layer>(new Layer(nullptr, nullptr));
+            std::shared_ptr<Layer> l0 = this->heuristic->initial_heuristic_layer(0);
             auto g = this->task_proxy.get_goals();
             for (size_t i = 0; i < g.size(); i++)
             {
@@ -279,6 +279,11 @@ namespace pdr_search
                 std::cout<< *layer << std::endl;
                 std::cout << "------" << std::endl;
             }
+        }
+
+        for (int i = 0; i < this->layers.size() - 1; ++i)
+        {
+            assert(this->layers[i + 1].is_subset_eq_of(this->layers[i]));
         }
 
         auto X = all_variables();
@@ -363,11 +368,23 @@ namespace pdr_search
                         Q.push(newObligation);
                     }
                 }
+                for (int i = 0; i < this->layers.size() - 1; ++i)
+                {
+                    assert(this->layers[i + 1].is_subset_eq_of(this->layers[i]));
+                }
             }
         }
 
         // Clause propagation
         auto A = this->task_proxy.get_operators();
+
+        // std::cout << "clause propagation start" << std::endl;
+        for (int j = 0; j < this->layers.size() - 1; ++j)
+        {
+            // std::cout << "layer " << (j) << " = " << this->layers[j] << std::endl;
+            assert(this->layers[j + 1].is_subset_eq_of(this->layers[j]));
+        }
+        // std::cout << "layer " << " = " << this->layers[this->layers.size()-1] << std::endl;
 
         // std::cout << "22: Clause propagation" << std::endl;
         // line 22
@@ -424,17 +441,22 @@ namespace pdr_search
                 // std::cout << "30: No plan possible" << std::endl;
                 return SearchStatus::FAILED;
             }
-        }
-
-        if (enable_layer_simplification)
-        {
-            for (int i = 0; get_layer(i)->size() != 0; i++)
+            // std::cout << "clause propagation " << i <<std::endl;
+            for (int j = 0; j < this->layers.size() - 1; ++j)
             {
-                // std::cout << "Layer L_" << i << ": " << *get_layer(i) << std::endl;
-                get_layer(i)->simplify();
-                // std::cout << "Layer L_" << i << ": " << *get_layer(i) << std::endl;
+                assert(this->layers[j + 1].is_subset_eq_of(this->layers[j]));
             }
         }
+
+        // if (enable_layer_simplification)
+        // {
+        //     for (int i = 0; get_layer(i)->size() != 0; i++)
+        //     {
+        //         // std::cout << "Layer L_" << i << ": " << *get_layer(i) << std::endl;
+        //         get_layer(i)->simplify();
+        //         // std::cout << "Layer L_" << i << ": " << *get_layer(i) << std::endl;
+        //     }
+        // }
         return SearchStatus::IN_PROGRESS;
     }
 
