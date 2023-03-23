@@ -474,12 +474,16 @@ namespace pdr_search
   {
     if (this->size() > s.size())
     {
+      // std::cout << "subset_eq (false branch)" <<  std::endl
+      //           << *this << std::endl
+      //           << s << std::endl;
       return false;
     }
     for (LiteralSet c : this->sets)
     {
       if (!s.contains_set(c))
       {
+        // std::cout << "subset_eq " << c << std::endl << *this << std::endl << s << std::endl;
         return false;
       }
     }

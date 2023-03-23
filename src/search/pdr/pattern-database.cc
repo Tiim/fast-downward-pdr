@@ -56,11 +56,11 @@ namespace pdr_search
         break;
       }
 
-      std::cout << "State: ";
-      for (size_t i=0; i < current_state.size(); i+=1) {
-        std::cout << "("<< i << "," << current_state[i] << ")";
-      }
-      std::cout << std::endl;
+      // std::cout << "State: ";
+      // for (size_t i=0; i < current_state.size(); i+=1) {
+      //   std::cout << "("<< i << "," << current_state[i] << ")";
+      // }
+      // std::cout << std::endl;
 
       // Get the heuristic distance.
       // Since the heuristic is admissible, the heuristic distance is always smaller or equal to the
