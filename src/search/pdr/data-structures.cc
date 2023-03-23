@@ -1,4 +1,5 @@
 #include "data-structures.h"
+#include <ostream>
 
 namespace pdr_search
 {
@@ -475,12 +476,19 @@ namespace pdr_search
   {
     if (this->size() > s.size())
     {
+      std::cout<< "is_subset_eq_of (size)" << std::endl
+          << *this << std::endl
+          << s << std::endl;
       return false;
     }
     for (LiteralSet c : this->get_sets())
     {
       if (!s.contains_set(c))
       {
+        std::cout<< "is_subset_eq_of " << std::endl
+          << c <<std::endl
+          << *this << std::endl
+          << s << std::endl;
         return false;
       }
     }
