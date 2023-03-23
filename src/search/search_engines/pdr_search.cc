@@ -204,7 +204,7 @@ namespace pdr_search
         else if (i == 0)
         {
             // no parent layer -> nullptr
-            std::shared_ptr<Layer> l0 = this->heuristic->initial_heuristic_layer(0);
+            std::shared_ptr<Layer> l0 = this->heuristic->initial_heuristic_layer(0, nullptr);
             auto g = this->task_proxy.get_goals();
             for (size_t i = 0; i < g.size(); i++)
             {
@@ -283,7 +283,7 @@ namespace pdr_search
 
         for (int i = 0; i < this->layers.size() - 1; ++i)
         {
-            assert(this->layers[i + 1].is_subset_eq_of(this->layers[i]));
+            assert(this->layers[i + 1]->is_subset_eq_of(SetOfLiteralSets(*(this->layers[i]))));
         }
 
         auto X = all_variables();
@@ -370,7 +370,7 @@ namespace pdr_search
                 }
                 for (int i = 0; i < this->layers.size() - 1; ++i)
                 {
-                    assert(this->layers[i + 1].is_subset_eq_of(this->layers[i]));
+                    assert(this->layers[i + 1]->is_subset_eq_of(SetOfLiteralSets(*(this->layers[i]))));
                 }
             }
         }
@@ -382,7 +382,7 @@ namespace pdr_search
         for (int j = 0; j < this->layers.size() - 1; ++j)
         {
             // std::cout << "layer " << (j) << " = " << this->layers[j] << std::endl;
-            assert(this->layers[j + 1].is_subset_eq_of(this->layers[j]));
+            assert(this->layers[j + 1]->is_subset_eq_of(SetOfLiteralSets(*(this->layers[j]))));
         }
         // std::cout << "layer " << " = " << this->layers[this->layers.size()-1] << std::endl;
 
@@ -444,7 +444,7 @@ namespace pdr_search
             // std::cout << "clause propagation " << i <<std::endl;
             for (int j = 0; j < this->layers.size() - 1; ++j)
             {
-                assert(this->layers[j + 1].is_subset_eq_of(this->layers[j]));
+                assert(this->layers[j + 1]->is_subset_eq_of(SetOfLiteralSets(*(this->layers[j]))));
             }
         }
 
