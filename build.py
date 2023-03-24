@@ -12,6 +12,7 @@ CONFIGS = {config: params for config, params in build_configs.__dict__.items()
            if not config.startswith("_")}
 DEFAULT_CONFIG_NAME = CONFIGS.pop("DEFAULT")
 DEBUG_CONFIG_NAME = CONFIGS.pop("DEBUG")
+PROFILE_CONFIG_NAME = CONFIGS.pop("PROFILE")
 
 CMAKE = "cmake"
 DEFAULT_MAKE_PARAMETERS = []
@@ -133,6 +134,8 @@ def main():
             sys.exit(0)
         elif arg == "--debug":
             config_names.add(DEBUG_CONFIG_NAME)
+        elif arg == "--profile":
+            config_names.add(PROFILE_CONFIG_NAME)
         elif arg == "--all":
             config_names |= set(CONFIGS.keys())
         elif arg in CONFIGS:
