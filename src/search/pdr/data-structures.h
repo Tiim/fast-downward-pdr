@@ -156,7 +156,9 @@ namespace pdr_search
     friend std::ostream &operator<<(std::ostream &os, const Layer &l);
     void set_child(std::shared_ptr<Layer> c);
 
-    const std::set<LiteralSet> get_sets() const;
+    const std::vector<LiteralSet> get_sets() const;
+    bool contains_set(LiteralSet &ls) const;
+    std::shared_ptr<Layer> get_child() const;
     // Automatically adds the set also to the parents of the set (L_{j}) for j = 0,...,i-1
     // See Suda, 3.6.1 Representation of the Layers
     void add_set(LiteralSet c);
@@ -165,7 +167,6 @@ namespace pdr_search
 
     bool is_subset_eq_of(const Layer &s) const;
     size_t size() const;
-    bool contains_set(LiteralSet s) const;
 
     void simplify();
     void print_stack() const;

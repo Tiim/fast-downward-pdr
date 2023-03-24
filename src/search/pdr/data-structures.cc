@@ -326,12 +326,17 @@ namespace pdr_search
 
   bool LiteralSet::models(const Layer &l) const
   {
-    for (auto c : l.get_sets())
+    const Layer *layer = &l;
+    while (layer != nullptr)
     {
-      if (!models(c))
-      {
-        return false;
-      }
+        for (auto c : layer->get_delta())
+        {
+          if (!models(c))
+          {
+            return false;
+          }
+        }
+        layer = layer->get_child().get();
     }
     return true;
   }
@@ -557,18 +562,19 @@ namespace pdr_search
       this->child = c;
   }
 
-  const std::set<LiteralSet> Layer::get_sets() const 
+  const std::vector<LiteralSet> Layer::get_sets() const 
   {
-    std::set<LiteralSet> sets;
+    std::vector<LiteralSet> sets;
     const Layer *child = this;
     while (child != nullptr) {
         for (LiteralSet s : child->get_delta()) {
-            sets.insert(s);
+            sets.insert(sets.end(), s);
         }
         child = child->child.get();
     }
     return sets;
   }
+
 
   void Layer::print_stack() const 
   {
@@ -626,11 +632,11 @@ namespace pdr_search
     /* std::cout << "---- end add_set ----" << std::endl; */
 
     //TODO: remove this for performance
-    auto all_sets = get_sets();
-    assert(all_sets.find(c) != all_sets.end());
-    if (this->parent) {
-        assert(this->is_subset_eq_of(*(this->parent)));
-    }
+    /* auto all_sets = get_sets(); */
+    /* assert(all_sets.find(c) != all_sets.end()); */
+    /* if (this->parent) { */
+    /*     assert(this->is_subset_eq_of(*(this->parent))); */
+    /* } */
   }
 
 
@@ -668,11 +674,22 @@ namespace pdr_search
   }
 
 
-  bool Layer::contains_set(LiteralSet c) const
+  bool Layer::contains_set(LiteralSet &c) const
   {
-    auto s = this->get_sets();
-    auto res = s.find(c);
-    return res != s.end();
+    const Layer* child = this;
+    while (child != nullptr) {
+        auto sets = child->get_delta(); 
+        if (sets.find(c) != sets.end()) {
+            return true;
+        }
+        child = child->child.get();
+    }
+    return false;
+  }
+
+  std::shared_ptr<Layer> Layer::get_child() const 
+  {
+    return this->child;
   }
 
   void Layer::simplify()

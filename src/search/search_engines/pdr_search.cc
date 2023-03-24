@@ -244,7 +244,7 @@ namespace pdr_search
 
 
             // std::cout << "Layer " << i << ": " << l_i << std::endl;
-            //std::cout << "Layer " << i << " size: " << l_i.size() << " clauses" << std::endl;
+            std::cout << "Layer " << i << " size: " << l_i->size() << " clauses" << std::endl;
 
             this->layers.insert(this->layers.end(), l_i);
             return layers[i];
