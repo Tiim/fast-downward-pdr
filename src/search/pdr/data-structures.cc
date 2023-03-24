@@ -1,4 +1,6 @@
 #include "data-structures.h"
+#include <cstddef>
+#include <iterator>
 #include <ostream>
 
 namespace pdr_search
@@ -75,6 +77,20 @@ namespace pdr_search
     return Literal(factPair.var, factPair.value, fp);
   }
 
+  std::size_t Literal::hash() const 
+  {
+    utils::HashState hs;
+    utils::feed(hs, variable);
+    utils::feed(hs, value);
+    utils::feed(hs, positive);
+    return hs.get_hash32();
+  }
+
+  std::size_t LiteralHash::operator()(const Literal &v) const
+  {
+     return v.hash(); 
+  }
+
   LiteralSet::LiteralSet(SetType type) : set_type(type)
   {
   }
@@ -86,7 +102,7 @@ namespace pdr_search
   {
   }
 
-  LiteralSet::LiteralSet(std::set<Literal> init_literals, SetType type) : set_type(type), literals(init_literals)
+  LiteralSet::LiteralSet(std::unordered_set<Literal, LiteralHash> init_literals, SetType type) : set_type(type), literals(init_literals)
   {
   }
 
@@ -110,14 +126,7 @@ namespace pdr_search
     return !(*this == s);
   }
 
-  bool LiteralSet::operator<(const LiteralSet &b) const
-  {
-    if (!(literals < b.literals) && !(b.literals < literals))
-    {
-      return set_type < b.set_type;
-    }
-    return literals < b.literals;
-  }
+
   std::ostream &operator<<(std::ostream &os, const LiteralSet &ls)
   {
     os << COLOR_RED "{";
@@ -139,7 +148,7 @@ namespace pdr_search
     return os;
   }
 
-  std::set<Literal> &LiteralSet::get_literals()
+  std::unordered_set<Literal, LiteralHash> &LiteralSet::get_literals()
   {
     return literals;
   }
@@ -150,7 +159,7 @@ namespace pdr_search
 
   LiteralSet LiteralSet::invert() const
   {
-    std::set<Literal> new_set;
+    std::unordered_set<Literal, LiteralHash> new_set;
     for (auto l : literals)
     {
       new_set.insert(l.invert());
@@ -169,7 +178,7 @@ namespace pdr_search
 
   LiteralSet LiteralSet::pos() const
   {
-    std::set<Literal> new_set;
+    std::unordered_set<Literal,LiteralHash> new_set;
     for (auto l : literals)
     {
       new_set.insert(l.pos());
@@ -289,7 +298,7 @@ namespace pdr_search
 
   LiteralSet LiteralSet::set_minus(const LiteralSet &s) const
   {
-    std::set<Literal> nliterals;
+    std::unordered_set<Literal,LiteralHash> nliterals;
     for (auto l : literals)
     {
       if (!s.contains_literal(l))
@@ -339,6 +348,24 @@ namespace pdr_search
         layer = layer->get_child().get();
     }
     return true;
+  }
+
+  std::size_t LiteralSet::hash() const
+  {
+    // for predictable ordering
+    std::set<Literal> s;
+    s.insert(this->literals.begin(), this->literals.end());
+    utils::HashState hs;
+    utils::feed(hs, this->set_type);
+    for (auto l: this->literals) {
+        utils::feed(hs, l.hash());
+    }
+    return hs.get_hash32();
+  }
+
+  std::size_t LiteralSetHash::operator () (LiteralSet const &v) const
+  {
+    return v.hash();
   }
 
   void LiteralSet::simplify()
@@ -405,7 +432,7 @@ namespace pdr_search
   SetOfLiteralSets::SetOfLiteralSets(const SetOfLiteralSets &s) : set_type(s.set_type), sets(s.get_sets())
   {
   }
-  SetOfLiteralSets::SetOfLiteralSets(const std::set<LiteralSet> s, SetType type) : set_type(type), sets(s)
+  SetOfLiteralSets::SetOfLiteralSets(const std::unordered_set<LiteralSet, LiteralSetHash> s, SetType type) : set_type(type), sets(s)
   {
     for (auto set : s)
     {
@@ -425,15 +452,6 @@ namespace pdr_search
   bool SetOfLiteralSets::operator==(const SetOfLiteralSets &s) const
   {
     return set_type == s.set_type && get_sets() == s.get_sets();
-  }
-  bool SetOfLiteralSets::operator<(const SetOfLiteralSets &s) const
-  {
-    assert(set_type == s.set_type);
-    if (get_sets().size() == s.get_sets().size())
-    {
-      return get_sets() < s.get_sets();
-    }
-    return get_sets().size() < s.get_sets().size();
   }
   std::ostream &operator<<(std::ostream &os, const SetOfLiteralSets &s)
   {
@@ -459,7 +477,7 @@ namespace pdr_search
     return get_sets().size();
   }
 
-  const std::set<LiteralSet> SetOfLiteralSets::get_sets() const
+  const std::unordered_set<LiteralSet, LiteralSetHash> SetOfLiteralSets::get_sets() const
   {
     return sets;
   }
@@ -497,11 +515,17 @@ namespace pdr_search
   {
     auto se = get_sets();
     auto lse = l.get_sets();
-    std::set<LiteralSet> result;
-    set_difference(
-        se.begin(), se.end(),
-        lse.begin(), lse.end(),
-        inserter(result, result.end()));
+    std::unordered_set<LiteralSet, LiteralSetHash> result;
+    std::copy_if(
+            se.begin(), se.end(), 
+            std::inserter(result, result.end()), 
+            [&lse] (LiteralSet ls) {return lse.find(ls) == lse.end();}
+        );
+
+    /* set_difference(  */
+    /*     se.begin(), se.end(), */
+    /*     lse.begin(), lse.end(), */
+    /*     inserter(result, result.end())); */
 
     SetOfLiteralSets lnew = SetOfLiteralSets();
     for (auto clause : result)
@@ -512,6 +536,21 @@ namespace pdr_search
     return lnew;
   }
 
+  std::size_t SetOfLiteralSets::hash() const 
+  {
+    utils::HashState hs;
+    utils::feed(hs, this->set_type);
+    for(LiteralSet ls : this->sets) {
+        utils::feed(hs, ls.hash());
+    }
+    return hs.get_hash32();
+  }
+
+  std::size_t SetOfLiteralSetsHash::operator()(const SetOfLiteralSets &v) const
+  {
+     return v.hash(); 
+  }
+
   Layer::Layer(std::shared_ptr<Layer> c, std::shared_ptr<Layer> p) : parent(p), child(c)
   {
   }
@@ -520,7 +559,7 @@ namespace pdr_search
   {
   }
 
-  Layer::Layer(const std::set<LiteralSet> c,std::shared_ptr<Layer> ci, std::shared_ptr<Layer> p ) : parent(p), child(ci)
+  Layer::Layer(const std::unordered_set<LiteralSet> c,std::shared_ptr<Layer> ci, std::shared_ptr<Layer> p ) : parent(p), child(ci)
   {
     for (LiteralSet ls : c)
     {
@@ -562,9 +601,9 @@ namespace pdr_search
       this->child = c;
   }
 
-  const std::vector<LiteralSet> Layer::get_sets() const 
+  const std::unordered_set<LiteralSet, LiteralSetHash> Layer::get_sets() const 
   {
-    std::vector<LiteralSet> sets;
+    std::unordered_set<LiteralSet, LiteralSetHash> sets;
     const Layer *child = this;
     while (child != nullptr) {
         for (LiteralSet s : child->get_delta()) {
@@ -640,7 +679,7 @@ namespace pdr_search
   }
 
 
-  std::set<LiteralSet> Layer::get_delta() const 
+  std::unordered_set<LiteralSet, LiteralSetHash> Layer::get_delta() const 
   {
       return this->__sets;
   }
@@ -670,7 +709,13 @@ namespace pdr_search
   
   size_t Layer::size() const 
   {
-      return get_sets().size();
+      size_t sum = this->__sets.size();
+      Layer *l = this->child.get();
+      while (l != nullptr) {
+          sum += l->__sets.size();
+          l = l->child.get();
+      }
+      return sum;
   }
 
 

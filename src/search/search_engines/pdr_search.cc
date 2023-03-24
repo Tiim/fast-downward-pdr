@@ -37,7 +37,7 @@ namespace pdr_search
         SetOfLiteralSets Ls = SetOfLiteralSets(SetType::CLAUSE);
         SetOfLiteralSets Rnoop = SetOfLiteralSets(SetType::CUBE);
 
-        std::set<SetOfLiteralSets> Reasons;
+        std::unordered_set<SetOfLiteralSets, SetOfLiteralSetsHash> Reasons;
         for (LiteralSet c : L.get_sets())
         {
             if (!s.models(c))
@@ -526,7 +526,7 @@ namespace pdr_search
         s.unpack();
 
         int i = 0;
-        std::set<Literal> result;
+        std::unordered_set<Literal, LiteralHash> result;
         for (auto value : s.get_unpacked_values())
         {
             Literal v = Literal::from_fact(FactProxy(*task, i, value));
