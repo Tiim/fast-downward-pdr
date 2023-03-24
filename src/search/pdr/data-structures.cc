@@ -476,19 +476,12 @@ namespace pdr_search
   {
     if (this->size() > s.size())
     {
-      std::cout<< "is_subset_eq_of (size)" << std::endl
-          << *this << std::endl
-          << s << std::endl;
       return false;
     }
     for (LiteralSet c : this->get_sets())
     {
       if (!s.contains_set(c))
       {
-        std::cout<< "is_subset_eq_of " << std::endl
-          << c <<std::endl
-          << *this << std::endl
-          << s << std::endl;
         return false;
       }
     }
@@ -514,26 +507,26 @@ namespace pdr_search
     return lnew;
   }
 
-  Layer::Layer(std::shared_ptr<Layer> c, std::shared_ptr<Layer> p) : SetOfLiteralSets(std::set<LiteralSet>(), SetType::CLAUSE), parent(p), child(c)
+  Layer::Layer(std::shared_ptr<Layer> c, std::shared_ptr<Layer> p) : parent(p), child(c)
   {
   }
 
-  Layer::Layer(const Layer &l) : SetOfLiteralSets(l.sets, SetType::CLAUSE), child(l.child), parent(l.parent)
+  Layer::Layer(const Layer &l) :  child(l.child), parent(l.parent), __sets(l.get_delta())
   {
   }
 
-  Layer::Layer(const std::set<LiteralSet> c,std::shared_ptr<Layer> ci, std::shared_ptr<Layer> p ) : SetOfLiteralSets(c, SetType::CLAUSE), parent(p), child(ci)
+  Layer::Layer(const std::set<LiteralSet> c,std::shared_ptr<Layer> ci, std::shared_ptr<Layer> p ) : parent(p), child(ci)
   {
     for (LiteralSet ls : c)
     {
       assert(ls.is_clause());
-      // assert(ls.is_unit());
+      add_set(ls);
     }
   }
 
   Layer &Layer::operator=(const Layer &l)
   {
-    sets = l.sets;
+    __sets = l.__sets;
     parent = l.parent;
     child = l.child;
     return *this;
@@ -566,52 +559,120 @@ namespace pdr_search
 
   const std::set<LiteralSet> Layer::get_sets() const 
   {
-    // TODO: something is broken here
-    std::set<LiteralSet> sets(this->sets);
-    std::shared_ptr<Layer> child = this->child;
+    std::set<LiteralSet> sets;
+    const Layer *child = this;
     while (child != nullptr) {
-        for (LiteralSet s : this->sets) {
+        for (LiteralSet s : child->get_delta()) {
             sets.insert(s);
         }
-        child = child->child;
+        child = child->child.get();
     }
     return sets;
+  }
+
+  void Layer::print_stack() const 
+  {
+      if (this->parent) {
+          this->parent->print_stack();
+      }
+      std::cout << " Layer "<< (this->parent?"(p)":"" )<<(this->child?"(c)":"");
+      //std::cout << *this << std::endl;
+      std::cout << "Layer delta: ";
+      for (auto s : this->get_delta()) {
+          std::cout << s << ", ";
+      }
+      std::cout << std::endl;
+
+
   }
 
   void Layer::add_set(LiteralSet c)
   {
     assert(c.is_clause());
+    /* std::cout << "---- add_set ----" <<std::endl; */
+    /* std::cout << "adding set "<<c<<std::endl; */
+    /* std::cout << "Layer stack:" << std::endl; */
+    /* this->print_stack(); */
+    /* std::cout << "End Layer stack" << std::endl; */
+
 
     // don't insert if current or child layer already has the literalset
     bool child_already_has_set = false;
     Layer* child = this;
     while (child != nullptr) {
-        auto sets = get_sets();
+        auto sets = child->get_delta(); 
         if (sets.find(c) != sets.end()) {
             child_already_has_set = true;
+            break;
         }
         child = child->child.get();
     }
+
     if (!child_already_has_set) {
-        this->sets.insert(c);
-        
-        // erase from all parent layers
-        std::shared_ptr<Layer> parent = this->parent;
-        while (parent != nullptr) {
-            parent->sets.erase(c);
-            parent = parent->parent;
-        }
+        this->__sets.insert(c);
+    }        
+
+    // erase from all parent layers
+    // TODO: should be inside of if child_already_has_set
+    std::shared_ptr<Layer> parent = this->parent;
+    while (parent != nullptr) {
+        parent->__sets.erase(c);
+        parent = parent->parent;
     }
+    
+    /* std::cout << "-- After adding --" <<std::endl; */
+    /* this->print_stack(); */
+
+    /* std::cout << "---- end add_set ----" << std::endl; */
 
     //TODO: remove this for performance
     auto all_sets = get_sets();
     assert(all_sets.find(c) != all_sets.end());
+    if (this->parent) {
+        assert(this->is_subset_eq_of(*(this->parent)));
+    }
   }
 
 
   std::set<LiteralSet> Layer::get_delta() const 
   {
-      return this->sets;
+      return this->__sets;
+  }
+  
+  bool Layer::is_subset_eq_of(const Layer &s) const
+  {
+    if (this->size() > s.size())
+    {
+      /* std::cout<< "is_subset_eq_of (size)" << std::endl */
+      /*     << *this << std::endl */
+      /*     << s << std::endl; */
+      return false;
+    }
+    for (LiteralSet c : this->get_sets())
+    {
+      if (!s.contains_set(c))
+      {
+        /* std::cout<< "is_subset_eq_of " << std::endl */
+        /*   << "literal that violates: " << c <<std::endl */
+        /*   << "subset: " << *this << std::endl */
+        /*   << "superset: " << s << std::endl; */
+        return false;
+      }
+    }
+    return true;
+  }
+  
+  size_t Layer::size() const 
+  {
+      return get_sets().size();
+  }
+
+
+  bool Layer::contains_set(LiteralSet c) const
+  {
+    auto s = this->get_sets();
+    auto res = s.find(c);
+    return res != s.end();
   }
 
   void Layer::simplify()

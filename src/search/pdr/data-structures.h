@@ -135,18 +135,19 @@ namespace pdr_search
     bool operator<(const SetOfLiteralSets &s) const;
     friend std::ostream &operator<<(std::ostream &os, const SetOfLiteralSets &l);
     size_t size() const;
-    virtual const std::set<LiteralSet> get_sets() const;
-    virtual void add_set(LiteralSet s);
-    virtual bool contains_set(LiteralSet s) const;
-    virtual bool is_subset_eq_of(const SetOfLiteralSets &s) const;
-    virtual SetOfLiteralSets set_minus(const SetOfLiteralSets &s) const;
+    const std::set<LiteralSet> get_sets() const;
+    void add_set(LiteralSet s);
+    bool contains_set(LiteralSet s) const;
+    bool is_subset_eq_of(const SetOfLiteralSets &s) const;
+    SetOfLiteralSets set_minus(const SetOfLiteralSets &s) const;
   };
 
-  class Layer : public SetOfLiteralSets
+  class Layer 
   {
   private:
      std::shared_ptr<Layer> parent;
      std::shared_ptr<Layer> child;
+     std::set<LiteralSet> __sets;
   public:
     Layer(std::shared_ptr<Layer> child, std::shared_ptr<Layer> parent);
     Layer(const Layer &l);
@@ -162,7 +163,12 @@ namespace pdr_search
     // Returns a list of literal sets that are in the current layer but not in its child layer.
     std::set<LiteralSet> get_delta() const;
 
+    bool is_subset_eq_of(const Layer &s) const;
+    size_t size() const;
+    bool contains_set(LiteralSet s) const;
+
     void simplify();
+    void print_stack() const;
   };
 }
 #endif

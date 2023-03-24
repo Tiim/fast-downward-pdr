@@ -26,7 +26,7 @@ namespace pdr_search
   public:
     PDRHeuristic(const options::Options &opts);
     virtual ~PDRHeuristic();
-    virtual std::shared_ptr<Layer> initial_heuristic_layer(int i, std::shared_ptr<Layer> parent) = 0;
+    virtual void initial_heuristic_layer(int i, std::shared_ptr<Layer> layer) = 0;
 
     static void add_options_to_parser(OptionParser &parser);
   };
@@ -36,7 +36,7 @@ namespace pdr_search
   public:
     NoopPDRHeuristic(const options::Options &opts);
     ~NoopPDRHeuristic();
-    virtual std::shared_ptr<Layer> initial_heuristic_layer(int i, std::shared_ptr<Layer> parent);
+    virtual void initial_heuristic_layer(int i, std::shared_ptr<Layer> layer);
     static std::shared_ptr<PDRHeuristic> parse(OptionParser &parser);
   };
 

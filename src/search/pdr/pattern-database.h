@@ -18,7 +18,7 @@ namespace pdr_search
 
     public:
       PatternDBPDRHeuristic(const options::Options &opts);
-      std::shared_ptr<Layer> initial_heuristic_layer(int i, std::shared_ptr<Layer> parent);
+      void initial_heuristic_layer(int i, std::shared_ptr<Layer> layer);
 
       LiteralSet from_projected_state(pdbs::Pattern pattern, std::vector<int> state);
 

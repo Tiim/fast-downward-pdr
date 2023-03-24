@@ -22,6 +22,8 @@ namespace options
 namespace pdr_search
 {
 
+    void printLayers(std::vector<std::shared_ptr<Layer>> layers);
+    
     class PDRSearch : public SearchEngine
     {
         bool enable_obligation_rescheduling = true;

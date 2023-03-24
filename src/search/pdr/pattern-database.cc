@@ -20,7 +20,7 @@ namespace pdr_search
     std::cout << "Pattern size: " << pattern.size() << ", Variables: " << variables.size() << std::endl;
   }
 
-  std::shared_ptr<Layer> pdr_search::PatternDBPDRHeuristic::initial_heuristic_layer(int i, std::shared_ptr<Layer> parent)
+  void pdr_search::PatternDBPDRHeuristic::initial_heuristic_layer(int i, std::shared_ptr<Layer> layer)
   {
     auto task_proxy = TaskProxy(*task);
     auto pattern = pattern_database->get_pattern();
@@ -74,10 +74,9 @@ namespace pdr_search
         // Strengthen the layer such that the abstract state of 'current_state'
         // can not model the layer.
         LiteralSet ls = from_projected_state(pattern, current_state);
-        clauses.insert(ls.invert());
+        layer->add_set(ls.invert());
       }
     }
-    return std::shared_ptr<Layer>(new Layer(std::set<LiteralSet>(clauses), nullptr, parent));
   }
 
   LiteralSet PatternDBPDRHeuristic::from_projected_state(pdbs::Pattern pattern, std::vector<int> state)

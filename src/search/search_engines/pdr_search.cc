@@ -204,7 +204,8 @@ namespace pdr_search
         else if (i == 0)
         {
             // no parent layer -> nullptr
-            std::shared_ptr<Layer> l0 = this->heuristic->initial_heuristic_layer(0, nullptr);
+            std::shared_ptr<Layer> l0 = std::shared_ptr<Layer>(new Layer(nullptr, nullptr));
+            this->heuristic->initial_heuristic_layer(0, l0);
             auto g = this->task_proxy.get_goals();
             for (size_t i = 0; i < g.size(); i++)
             {
@@ -223,9 +224,11 @@ namespace pdr_search
         {
             std::shared_ptr<Layer> parent = get_layer(i-1);
             std::shared_ptr<Layer> l_i = std::shared_ptr<Layer>(new Layer(nullptr, parent));
+            parent->set_child(l_i);
             if (this->heuristic)
             {
-                l_i = this->heuristic->initial_heuristic_layer(i, parent);
+                this->heuristic->initial_heuristic_layer(i, parent);
+                parent->set_child(l_i);
                 // asserts to make sure heuristic seed layer is valid.
                 for (auto s : l_i->get_sets())
                 {
@@ -237,11 +240,12 @@ namespace pdr_search
                 }
 
                 // std::cout << "Initial Heuristic Layer " << i << ": " << l_i << std::endl;
-            }
+            } 
+
+
             // std::cout << "Layer " << i << ": " << l_i << std::endl;
             //std::cout << "Layer " << i << " size: " << l_i.size() << " clauses" << std::endl;
 
-            parent->set_child(l_i);
             this->layers.insert(this->layers.end(), l_i);
             return layers[i];
         }
@@ -250,6 +254,23 @@ namespace pdr_search
     void PDRSearch::initialize()
     {
         auto L0 = *get_layer(0);
+    }
+
+    void printLayers(std::vector<std::shared_ptr<Layer>> layers) {
+        std::cout << "Printing all layers" << std::endl;
+        for (size_t i = 0; i < layers.size(); ++i) {
+            std::cout << "Layer " << i << ": " << std::endl;
+            std::cout << layers[i] << std::endl;
+        }
+        std::cout << "Printing all deltas" << std::endl;
+        for (size_t i = 0; i < layers.size(); ++i) {
+            std::cout << "Delta " << i << ": " << std::endl;
+            for (auto d : layers[i]->get_delta()) {
+                std::cout << d << ", ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "End printing layers" << std::endl;
     }
 
     void PDRSearch::print_statistics() const
@@ -272,18 +293,18 @@ namespace pdr_search
         std::cout << "Step " << iteration << " of PDR search" << std::endl;
         // std::cout << "------------------" << std::endl;
 
-        if (iteration == 4) {
-            int i = 0;
-            for (auto layer : this->layers) {
-                std::cout<< "LAYER " << i++ << std::endl;
-                std::cout<< *layer << std::endl;
-                std::cout << "------" << std::endl;
-            }
-        }
+        /* if (iteration == 4) { */
+        /*     int i = 0; */
+        /*     for (auto layer : this->layers) { */
+        /*         std::cout<< "LAYER " << i++ << std::endl; */
+        /*         std::cout<< *layer << std::endl; */
+        /*         std::cout << "------" << std::endl; */
+        /*     } */
+        /* } */
 
         for (int i = 0; i < this->layers.size() - 1; ++i)
         {
-            assert(this->layers[i + 1]->is_subset_eq_of(SetOfLiteralSets(*(this->layers[i]))));
+            assert(this->layers[i + 1]->is_subset_eq_of(*this->layers[i]));
         }
 
         auto X = all_variables();
@@ -370,7 +391,7 @@ namespace pdr_search
                 }
                 for (int i = 0; i < this->layers.size() - 1; ++i)
                 {
-                    assert(this->layers[i + 1]->is_subset_eq_of(SetOfLiteralSets(*(this->layers[i]))));
+                    assert(this->layers[i + 1]->is_subset_eq_of(*(this->layers[i])));
                 }
             }
         }
@@ -382,7 +403,7 @@ namespace pdr_search
         for (int j = 0; j < this->layers.size() - 1; ++j)
         {
             // std::cout << "layer " << (j) << " = " << this->layers[j] << std::endl;
-            assert(this->layers[j + 1]->is_subset_eq_of(SetOfLiteralSets(*(this->layers[j]))));
+            assert(this->layers[j + 1]->is_subset_eq_of(*(this->layers[j])));
         }
         // std::cout << "layer " << " = " << this->layers[this->layers.size()-1] << std::endl;
 
@@ -444,7 +465,7 @@ namespace pdr_search
             // std::cout << "clause propagation " << i <<std::endl;
             for (int j = 0; j < this->layers.size() - 1; ++j)
             {
-                assert(this->layers[j + 1]->is_subset_eq_of(SetOfLiteralSets(*(this->layers[j]))));
+                assert(this->layers[j + 1]->is_subset_eq_of(*(this->layers[j])));
             }
         }
 
