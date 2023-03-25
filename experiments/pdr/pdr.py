@@ -12,12 +12,10 @@ BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
 # If REVISION_CACHE is None, the default ./data/revision-cache is used.
 REVISION_CACHE = os.environ.get("DOWNWARD_REVISION_CACHE")
 
-SUITE_NAME = "small"
-#SUITE_NAME = "full"
 
 
 
-if SUITE_NAME == "full":
+if project.REMOTE:
     SUITE = project.SUITE_UNIT_COST
     ENV = project.BaselSlurmEnvironment(email="tim.bachmann@stud.unibas.ch")
 else:
@@ -26,11 +24,17 @@ else:
 
 # TODO: change these to pdr
 CONFIGS = [
-    (f"{index:02d}-{h_nick}", ["--search", f"eager_greedy([{h}])"])
+    (f"{index:02d}-{h_nick}", ["--search", f"pdr({h})"])
     for index, (h_nick, h) in enumerate(
         [
-            ("cg", "cg(transform=adapt_costs(one))"),
-            ("ff", "ff(transform=adapt_costs(one))"),
+            ("pdr-noop", "heuristic=pdr-noop()"),
+            ("pdr-greedy-50", "heuristic=pdr-pdb(pattern=greedy(50))"),
+            ("pdr-greedy-100", "heuristic=pdr-pdb(pattern=greedy(100))"),
+            ("pdr-greedy-200", "heuristic=pdr-pdb(pattern=greedy(200))"),
+            ("pdr-greedy-500", "heuristic=pdr-pdb(pattern=greedy(500))"),
+            ("pdr-greedy-1000", "heuristic=pdr-pdb(pattern=greedy(1000))"),
+            ("pdr-cegar", "heuristic=pdr-pdb(pattern=cegar_pattern())"),
+            ("pdr-rand", "heuristic=pdr-pdb(pattern=random_pattern(1000))"),
         ],
         start=1,
     )
@@ -41,7 +45,7 @@ DRIVER_OPTIONS = ["--overall-time-limit", "30m"]
 
 # TODO: change these
 REVS = [
-    ("PDR-thesis", "pdr base"),
+    ("lab", "pdr base"),
 ]
 
 ATTRIBUTES = [
