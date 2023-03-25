@@ -19,8 +19,8 @@ if project.REMOTE:
     SUITE = project.SUITE_UNIT_COST
     ENV = project.BaselSlurmEnvironment(email="tim.bachmann@stud.unibas.ch")
 else:
-    SUITE = project.SUITE_UNIT_COST[:3]
-    ENV = project.LocalEnvironment(processes=2)
+    SUITE = project.SUITE_UNIT_COST[:1]
+    ENV = project.LocalEnvironment(processes=1)
 
 # TODO: change these to pdr
 CONFIGS = [
@@ -45,7 +45,7 @@ DRIVER_OPTIONS = ["--overall-time-limit", "30m"]
 
 # TODO: change these
 REVS = [
-    ("lab", "pdr base"),
+    ("PDR-thesis", "pdr base"),
 ]
 
 ATTRIBUTES = [
