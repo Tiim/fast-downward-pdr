@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <iostream>
 #include <vector>
+#include <chrono>
 
 // TODO: perf improvements unordered sets
 
@@ -203,6 +204,7 @@ namespace pdr_search
         }
         else if (i == 0)
         {
+            auto begin = std::chrono::high_resolution_clock::now();
             // no parent layer -> nullptr
             std::shared_ptr<Layer> l0 = std::shared_ptr<Layer>(new Layer(nullptr, nullptr));
             this->heuristic->initial_heuristic_layer(0, l0);
@@ -214,14 +216,21 @@ namespace pdr_search
                 l0->add_set(LiteralSet(Literal::from_fact(g[i]), SetType::CLAUSE));
             }
             // std::cout << "Layer 0 (goal): " << l0 << std::endl;
-            std::cout << "Layer 0 (goal) size: " << l0->size() << " clauses" << std::endl;
-
+            /* std::cout << "Layer 0 (goal) size: " << l0->size() << " clauses" << std::endl; */
+            
+            auto end = std::chrono::high_resolution_clock::now();
+            
+            this->seeding_time_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(end-begin).count();
+        
             //std::cout << "Initial Heuristic Layer " << 0 << ": " << l0 << std::endl;
             this->layers.insert(this->layers.end(), l0);
+            this->seeded_layers_size.insert(this->seeded_layers_size.end(), l0->size()); 
             return layers[i];
         }
         else
         {
+
+            auto begin = std::chrono::high_resolution_clock::now();
             std::shared_ptr<Layer> parent = get_layer(i-1);
             std::shared_ptr<Layer> l_i = std::shared_ptr<Layer>(new Layer(nullptr, parent));
             parent->set_child(l_i);
@@ -241,12 +250,15 @@ namespace pdr_search
 
                 // std::cout << "Initial Heuristic Layer " << i << ": " << l_i << std::endl;
             } 
-
+            
+            auto end = std::chrono::high_resolution_clock::now();
+            this->seeding_time_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(end-begin).count();
 
             // std::cout << "Layer " << i << ": " << l_i << std::endl;
-            std::cout << "Layer " << i << " size: " << l_i->size() << " clauses" << std::endl;
+            /* std::cout << "Layer " << i << " size: " << l_i->size() << " clauses" << std::endl; */
 
             this->layers.insert(this->layers.end(), l_i);
+            this->seeded_layers_size.insert(this->seeded_layers_size.end(),l_i->size()); 
             return layers[i];
         }
     }
@@ -275,6 +287,12 @@ namespace pdr_search
 
     void PDRSearch::print_statistics() const
     {
+        for(size_t i = 0; i < this->layers.size(); ++i) {
+            std::cout << "Layer size " << i << ": " <<  this->layers[i]->size() << std::endl;
+            std::cout << "Seed layer size " << i << ": " << this->seeded_layers_size[i]<<std::endl;
+        }
+        std::cout << "Total seeding time: " << this->seeding_time_ns << " nanoseconds" <<std::endl;
+
         statistics.print_detailed_statistics();
         search_space.print_statistics();
     }
