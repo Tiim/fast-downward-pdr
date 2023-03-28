@@ -34,24 +34,22 @@ class CommonParser(Parser):
 
 def main():
     parser = CommonParser()
-    parser.add_bottom_up_pattern(
-        "search_start_time",
-        r"\[t=(.+)s, \d+ KB\] g=0, 1 evaluated, 0 expanded",
-        type=float,
-    )
-    parser.add_bottom_up_pattern(
-        "search_start_memory",
-        r"\[t=.+s, (\d+) KB\] g=0, 1 evaluated, 0 expanded",
-        type=int,
-    )
-    parser.add_pattern(
-        "initial_h_value",
-        r"f = (\d+) \[1 evaluated, 0 expanded, t=.+s, \d+ KB\]",
+    parser.add_repeated_pattern(
+        "layer_size",
+        r"Layer size d+: (\d+)\n",
+        required=True,
         type=int,
     )
     parser.add_repeated_pattern(
-        "h_values",
-        r"New best heuristic value for .+: (\d+)\n",
+        "layer_size_seeded",
+        r"Seed layer size \d+: (\d+)\n"
+        required=True,
+        type=int,
+    )
+    parser.add_pattern(
+        "layer_seed_time",
+        r"Total seeding time: (\d+) nanoseconds\n",
+        required=True,
         type=int,
     )
     parser.parse()

@@ -19,8 +19,8 @@ if project.REMOTE:
     SUITE = project.SUITE_UNIT_COST
     ENV = project.BaselSlurmEnvironment(email="tim.bachmann@stud.unibas.ch")
 else:
-    SUITE = project.SUITE_UNIT_COST[:1]
-    ENV = project.LocalEnvironment(processes=1)
+    SUITE = ["grid"] #project.SUITE_UNIT_COST[:1]
+    ENV = project.LocalEnvironment(processes=4)
 
 # TODO: change these to pdr
 CONFIGS = [
@@ -45,7 +45,8 @@ DRIVER_OPTIONS = ["--overall-time-limit", "30m"]
 
 # TODO: change these
 REVS = [
-    ("PDR-thesis", "pdr base"),
+    ("PDR-thesis", "latest"),
+#    ("a5a70577e8d20103c90e19363f7413385da63e30", "first-revision"), # first revision that includes metrics. Only some light optimisation done
 ]
 
 ATTRIBUTES = [
