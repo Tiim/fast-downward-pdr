@@ -37,19 +37,19 @@ def main():
     parser.add_repeated_pattern(
         "layer_size",
         r"Layer size \d+: (\d+)\n",
-        required=True,
+        required=False,
         type=int,
     )
     parser.add_repeated_pattern(
         "layer_size_seeded",
         r"Seed layer size \d+: (\d+)\n",
-        required=True,
+        required=False,
         type=int,
     )
     parser.add_pattern(
         "layer_seed_time",
         r"Total seeding time: (\d+) nanoseconds\n",
-        required=True,
+        required=False,
         type=int,
     )
     parser.parse()
