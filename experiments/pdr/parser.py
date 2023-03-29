@@ -36,13 +36,13 @@ def main():
     parser = CommonParser()
     parser.add_repeated_pattern(
         "layer_size",
-        r"Layer size d+: (\d+)\n",
+        r"Layer size \d+: (\d+)\n",
         required=True,
         type=int,
     )
     parser.add_repeated_pattern(
         "layer_size_seeded",
-        r"Seed layer size \d+: (\d+)\n"
+        r"Seed layer size \d+: (\d+)\n",
         required=True,
         type=int,
     )
