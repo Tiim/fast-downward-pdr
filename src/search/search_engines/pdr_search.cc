@@ -208,6 +208,7 @@ namespace pdr_search
             // no parent layer -> nullptr
             std::shared_ptr<Layer> l0 = std::shared_ptr<Layer>(new Layer(nullptr, nullptr));
             this->heuristic->initial_heuristic_layer(0, l0);
+            size_t seeded_layer_size = l0->size();
             auto g = this->task_proxy.get_goals();
             for (size_t i = 0; i < g.size(); i++)
             {
@@ -224,7 +225,7 @@ namespace pdr_search
         
             //std::cout << "Initial Heuristic Layer " << 0 << ": " << l0 << std::endl;
             this->layers.insert(this->layers.end(), l0);
-            this->seeded_layers_size.insert(this->seeded_layers_size.end(), l0->size()); 
+            this->seeded_layers_size.insert(this->seeded_layers_size.end(), seeded_layer_size); 
             return layers[i];
         }
         else
