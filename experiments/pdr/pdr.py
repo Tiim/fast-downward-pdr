@@ -52,14 +52,12 @@ REVS = [
 ATTRIBUTES = [
     "error",
     "run_dir",
-    "search_start_time",
-    "search_start_memory",
     "total_time",
-    "h_values",
     "coverage",
-    "expansions",
     "memory",
-    project.EVALUATIONS_PER_TIME,
+    "layer_seed_time",
+    "layer_size",
+    "layer_size_seeded",
 ]
 
 exp = project.FastDownwardExperiment(environment=ENV, revision_cache=REVISION_CACHE)
