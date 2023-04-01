@@ -76,7 +76,7 @@ namespace pdr_search
       int dist = pattern_database->get_value(current_state);
       // If the heuristic distance is <= than the current layer number i,
       // the goal can be possibly reached from current_state in i steps.
-      if (dist > i)
+      if (dist > i || dist < 0)
       {
         // Strengthen the layer such that the abstract state of 'current_state'
         // can not model the layer.
