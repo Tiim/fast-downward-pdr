@@ -18,6 +18,9 @@ namespace pdr_search
     auto variables = TaskProxy(*task).get_variables();
 
     std::cout << "Pattern size: " << pattern.size() << ", Variables: " << variables.size() << std::endl;
+    if (pattern.size() == 0) {
+        std::cout << "! Warning: empty pattern" << std::endl;
+    }
   }
 
   void pdr_search::PatternDBPDRHeuristic::initial_heuristic_layer(int i, std::shared_ptr<Layer> layer)
@@ -27,6 +30,10 @@ namespace pdr_search
     auto variables = task_proxy.get_variables();
     std::set<LiteralSet> clauses;
     std::vector<int> current_state(variables.size()); // is initialized with 0 values
+
+    if (pattern.size() < 1) {
+        return;
+    }
 
     // first variable in pattern with -1 so we can increment it to 0 in the loop
     current_state[pattern[0]] = -1;
