@@ -292,6 +292,7 @@ namespace pdr_search
             std::cout << "Seed layer size " << i << ": " << this->seeded_layers_size[i]<<std::endl;
         }
         std::cout << "Total seeding time: " << this->seeding_time_ns << " nanoseconds" <<std::endl;
+        std::cout << "Total expanded obligations: " << this->obligation_expansions << std::endl;
 
         statistics.print_detailed_statistics();
         search_space.print_statistics();
@@ -352,6 +353,7 @@ namespace pdr_search
                 // line 8
                 auto si = Q.top();
                 Q.pop();
+                this->obligation_expansions += 1;
                 //std::cout << "8: Pop obligation from queue: (s, i) = " << *si << std::endl;
                 if (si->get_parent()) {
                     //std::cout << "8: Parent = " << *(si->get_parent()) << std::endl;

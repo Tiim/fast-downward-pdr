@@ -7,6 +7,7 @@
 #include "../pdr/data-structures.h"
 #include "../pdr/heuristic.h"
 
+#include <cstddef>
 #include <vector>
 #include <set>
 #include <memory>
@@ -33,6 +34,7 @@ namespace pdr_search
         std::vector<std::shared_ptr<Layer>> layers;
         std::vector<std::size_t> seeded_layers_size;
         std::int64_t seeding_time_ns = 0;
+        std::size_t obligation_expansions = 0;
 
 
         int iteration = 0;

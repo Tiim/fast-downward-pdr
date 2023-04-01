@@ -58,6 +58,7 @@ ATTRIBUTES = [
     "layer_seed_time",
     "layer_size",
     "layer_size_seeded",
+    "obligation_expansions",
 ]
 
 exp = project.FastDownwardExperiment(environment=ENV, revision_cache=REVISION_CACHE)

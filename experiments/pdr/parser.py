@@ -52,6 +52,12 @@ def main():
         required=False,
         type=int,
     )
+    parser.add_pattern(
+        "obligation_expansions",
+        r"Total expanded obligations: (\d+)\n",
+        required=False,
+        type=int,
+    )
     parser.parse()
 
 
