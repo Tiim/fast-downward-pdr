@@ -679,7 +679,7 @@ namespace pdr_search
   }
 
 
-  std::unordered_set<LiteralSet, LiteralSetHash> Layer::get_delta() const 
+  const std::unordered_set<LiteralSet, LiteralSetHash> &Layer::get_delta() const 
   {
       return this->__sets;
   }
