@@ -5,10 +5,10 @@
 
 namespace pdr_search
 {
-  Literal::Literal(int var, int val, FactProxy f) : variable(var), value(val), fact(f)
+  Literal::Literal(int var, int val, const FactProxy &f) : variable(var), value(val), fact(f)
   {
   }
-  Literal::Literal(int var, int val, bool pos, FactProxy f) : variable(var), value(val), positive(pos), fact(f)
+  Literal::Literal(int var, int val, bool pos, const FactProxy &f) : variable(var), value(val), positive(pos), fact(f)
   {
   }
   Literal::Literal(const Literal &l) : variable(l.variable), value(l.value), positive(l.positive), fact(l.fact)
@@ -94,7 +94,7 @@ namespace pdr_search
   LiteralSet::LiteralSet(SetType type) : set_type(type)
   {
   }
-  LiteralSet::LiteralSet(Literal v, SetType type) : set_type(type)
+  LiteralSet::LiteralSet(const Literal &v, SetType type) : set_type(type)
   {
     literals.insert(v);
   }
@@ -102,7 +102,7 @@ namespace pdr_search
   {
   }
 
-  LiteralSet::LiteralSet(std::unordered_set<Literal, LiteralHash> init_literals, SetType type) : set_type(type), literals(init_literals)
+  LiteralSet::LiteralSet(const std::unordered_set<Literal, LiteralHash> &init_literals, SetType type) : set_type(type), literals(init_literals)
   {
   }
 
@@ -148,7 +148,7 @@ namespace pdr_search
     return os;
   }
 
-  std::unordered_set<Literal, LiteralHash> &LiteralSet::get_literals()
+  const std::unordered_set<Literal, LiteralHash> &LiteralSet::get_literals() const
   {
     return literals;
   }
@@ -221,13 +221,13 @@ namespace pdr_search
     literals.erase(l);
   }
 
-  void LiteralSet::apply_literal(Literal l)
+  void LiteralSet::apply_literal(const Literal &l)
   {
     remove_literal(l.invert());
     add_literal(l);
   }
 
-  void LiteralSet::apply_cube(LiteralSet l)
+  void LiteralSet::apply_cube(const LiteralSet &l)
   {
     assert(l.is_cube());
     for (auto lit : l.get_literals())
@@ -236,7 +236,7 @@ namespace pdr_search
     }
   }
 
-  bool LiteralSet::contains_literal(Literal l) const
+  bool LiteralSet::contains_literal(const Literal &l) const
   {
     return literals.find(l) != literals.end();
   }
@@ -383,7 +383,7 @@ namespace pdr_search
     }
   }
 
-  Obligation::Obligation(LiteralSet s, int p, std::shared_ptr<Obligation> par) : parent(par), state(s), priority(p)
+  Obligation::Obligation(const LiteralSet &s, int p, std::shared_ptr<Obligation> par) : parent(par), state(s), priority(p)
   {
     assert(s.is_cube());
   }
@@ -432,7 +432,7 @@ namespace pdr_search
   SetOfLiteralSets::SetOfLiteralSets(const SetOfLiteralSets &s) : set_type(s.set_type), sets(s.get_sets())
   {
   }
-  SetOfLiteralSets::SetOfLiteralSets(const std::unordered_set<LiteralSet, LiteralSetHash> s, SetType type) : set_type(type), sets(s)
+  SetOfLiteralSets::SetOfLiteralSets(const std::unordered_set<LiteralSet, LiteralSetHash> &s, SetType type) : set_type(type), sets(s)
   {
     for (auto set : s)
     {
@@ -482,13 +482,13 @@ namespace pdr_search
     return sets;
   }
 
-  void SetOfLiteralSets::add_set(LiteralSet c)
+  void SetOfLiteralSets::add_set(const LiteralSet &c)
   {
     assert(c.get_set_type() == set_type);
     this->sets.insert(c);
   }
 
-  bool SetOfLiteralSets::contains_set(LiteralSet c) const
+  bool SetOfLiteralSets::contains_set(const LiteralSet &c) const
   {
     auto s = this->get_sets();
     auto res = s.find(c);
@@ -559,7 +559,7 @@ namespace pdr_search
   {
   }
 
-  Layer::Layer(const std::unordered_set<LiteralSet> c,std::shared_ptr<Layer> ci, std::shared_ptr<Layer> p ) : parent(p), child(ci)
+  Layer::Layer(const std::unordered_set<LiteralSet> &c,std::shared_ptr<Layer> ci, std::shared_ptr<Layer> p ) : parent(p), child(ci)
   {
     for (LiteralSet ls : c)
     {
@@ -631,7 +631,7 @@ namespace pdr_search
 
   }
 
-  void Layer::add_set(LiteralSet c)
+  void Layer::add_set(const LiteralSet &c)
   {
     assert(c.is_clause());
     /* std::cout << "---- add_set ----" <<std::endl; */

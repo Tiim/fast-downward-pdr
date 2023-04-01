@@ -34,8 +34,8 @@ namespace pdr_search
     FactProxy fact;
 
   public:
-    Literal(int variable, int value, FactProxy fp);
-    Literal(int variable, int value, bool positive, FactProxy fp);
+    Literal(int variable, int value, const FactProxy &fp);
+    Literal(int variable, int value, bool positive, const FactProxy &fp);
     Literal(const Literal &l);
     Literal &operator=(const Literal &l);
     bool operator==(const Literal &l) const;
@@ -65,14 +65,14 @@ namespace pdr_search
 
   public:
     LiteralSet(SetType type);
-    LiteralSet(Literal v, SetType type);
+    LiteralSet(const Literal &v, SetType type);
     LiteralSet(const LiteralSet &s);
-    LiteralSet(std::unordered_set<Literal, LiteralHash> init_literals, SetType type);
+    LiteralSet(const std::unordered_set<Literal, LiteralHash> &init_literals, SetType type);
     LiteralSet &operator=(const LiteralSet &s);
     bool operator==(const LiteralSet &s) const;
     bool operator!=(const LiteralSet &s) const;
     friend std::ostream &operator<<(std::ostream &os, const LiteralSet &ls);
-    std::unordered_set<Literal, LiteralHash> &get_literals();
+    const std::unordered_set<Literal, LiteralHash> &get_literals() const;
     SetType get_set_type() const;
 
     LiteralSet invert() const;
@@ -85,9 +85,9 @@ namespace pdr_search
     void add_literal(Literal l);
     void remove_literal(Literal l);
     // Remove ¬l, add l
-    void apply_literal(Literal l);
-    void apply_cube(LiteralSet l);
-    bool contains_literal(Literal l) const;
+    void apply_literal(const Literal &l);
+    void apply_cube(const LiteralSet &l);
+    bool contains_literal(const Literal &l) const;
     bool is_subset_eq_of(const LiteralSet &ls) const;
     LiteralSet set_union(const LiteralSet &s) const;
     LiteralSet set_intersect(const LiteralSet &s) const;
@@ -122,7 +122,7 @@ namespace pdr_search
     int priority;
 
   public:
-    Obligation(LiteralSet s, int priority, std::shared_ptr<Obligation> parent);
+    Obligation(const LiteralSet &s, int priority, std::shared_ptr<Obligation> parent);
     Obligation(const Obligation &o);
     Obligation &operator=(const Obligation &o);
     friend std::ostream &operator<<(std::ostream &os, const Obligation &o);
@@ -142,15 +142,15 @@ namespace pdr_search
     SetOfLiteralSets();
     SetOfLiteralSets(SetType type);
     SetOfLiteralSets(const SetOfLiteralSets &s);
-    SetOfLiteralSets(const std::unordered_set<LiteralSet, LiteralSetHash> sets, SetType type);
+    SetOfLiteralSets(const std::unordered_set<LiteralSet, LiteralSetHash> &sets, SetType type);
     virtual ~SetOfLiteralSets();
     SetOfLiteralSets &operator=(const SetOfLiteralSets &l);
     bool operator==(const SetOfLiteralSets &s) const;
     friend std::ostream &operator<<(std::ostream &os, const SetOfLiteralSets &l);
     size_t size() const;
     const std::unordered_set<LiteralSet, LiteralSetHash> get_sets() const;
-    void add_set(LiteralSet s);
-    bool contains_set(LiteralSet s) const;
+    void add_set(const LiteralSet &s);
+    bool contains_set(const LiteralSet &s) const;
     bool is_subset_eq_of(const SetOfLiteralSets &s) const;
     SetOfLiteralSets set_minus(const SetOfLiteralSets &s) const;
     std::size_t hash() const;
@@ -170,7 +170,7 @@ namespace pdr_search
   public:
     Layer(std::shared_ptr<Layer> child, std::shared_ptr<Layer> parent);
     Layer(const Layer &l);
-    Layer(const std::unordered_set<LiteralSet> clauses,std::shared_ptr<Layer> child, std::shared_ptr<Layer> parent);
+    Layer(const std::unordered_set<LiteralSet> &clauses,std::shared_ptr<Layer> child, std::shared_ptr<Layer> parent);
     Layer &operator=(const Layer &l);
     friend std::ostream &operator<<(std::ostream &os, const Layer &l);
     void set_child(std::shared_ptr<Layer> c);
@@ -180,7 +180,7 @@ namespace pdr_search
     std::shared_ptr<Layer> get_child() const;
     // Automatically adds the set also to the parents of the set (L_{j}) for j = 0,...,i-1
     // See Suda, 3.6.1 Representation of the Layers
-    void add_set(LiteralSet c);
+    void add_set(const LiteralSet &c);
     // Returns a list of literal sets that are in the current layer but not in its child layer.
     std::unordered_set<LiteralSet, LiteralSetHash> get_delta() const;
 
