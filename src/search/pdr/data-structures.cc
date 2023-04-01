@@ -83,7 +83,7 @@ namespace pdr_search
     utils::feed(hs, variable);
     utils::feed(hs, value);
     utils::feed(hs, positive);
-    return hs.get_hash32();
+    return hs.get_hash64();
   }
 
   std::size_t LiteralHash::operator()(const Literal &v) const
@@ -360,7 +360,7 @@ namespace pdr_search
     for (auto l: this->literals) {
         utils::feed(hs, l.hash());
     }
-    return hs.get_hash32();
+    return hs.get_hash64();
   }
 
   std::size_t LiteralSetHash::operator () (LiteralSet const &v) const
@@ -543,7 +543,7 @@ namespace pdr_search
     for(LiteralSet ls : this->sets) {
         utils::feed(hs, ls.hash());
     }
-    return hs.get_hash32();
+    return hs.get_hash64();
   }
 
   std::size_t SetOfLiteralSetsHash::operator()(const SetOfLiteralSets &v) const
