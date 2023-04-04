@@ -183,9 +183,8 @@ namespace pdr_search
         // std::cout << "e23: r = " << r << std::endl;
 
         // line 25 - 27 optional
-        // TODO implement line 25 - 27
-
-        for (auto l : r.get_literals()) {
+        auto r_literals = r.get_literals();
+        for (auto l : r_literals) {
             auto ls = LiteralSet(SetType::CUBE);
             ls.add_literal(l);
             auto r_minus_l = r.set_minus(ls);
