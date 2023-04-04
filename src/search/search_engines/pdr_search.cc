@@ -185,6 +185,29 @@ namespace pdr_search
         // line 25 - 27 optional
         // TODO implement line 25 - 27
 
+        for (auto l : r.get_literals()) {
+            auto ls = LiteralSet(SetType::CUBE);
+            ls.add_literal(l);
+            auto r_minus_l = r.set_minus(ls);
+            bool condition_is_met = true;
+            for (auto Ra : R) {
+                bool exists = false;
+                for (auto ra : Ra.get_sets()) {
+                    if (ra.is_subset_eq_of(r_minus_l)) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                   condition_is_met = false;
+                   break;
+                }
+            }
+            if (condition_is_met) {
+                r = r_minus_l;
+            }
+        }
+
         // line 29
         assert(r.size() > 0);
         // std::cout << "e29: No successor t found, reason: r = " << r << std::endl;
