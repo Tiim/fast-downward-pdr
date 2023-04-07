@@ -260,7 +260,7 @@ namespace pdr_search
             parent->set_child(l_i);
             if (this->heuristic)
             {
-                this->heuristic->initial_heuristic_layer(i, parent);
+                this->heuristic->initial_heuristic_layer(i, l_i);
                 parent->set_child(l_i);
                 // asserts to make sure heuristic seed layer is valid.
                 for (auto s : l_i->get_sets())
