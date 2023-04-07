@@ -174,7 +174,7 @@ namespace pdr_search
     friend std::ostream &operator<<(std::ostream &os, const Layer &l);
     void set_child(std::shared_ptr<Layer> c);
 
-    const std::unordered_set<LiteralSet, LiteralSetHash> get_sets() const;
+    const std::shared_ptr<std::unordered_set<LiteralSet, LiteralSetHash>> get_sets() const;
     bool contains_set(const LiteralSet &ls) const;
     std::shared_ptr<Layer> get_child() const;
     // Automatically adds the set also to the parents of the set (L_{j}) for j = 0,...,i-1
