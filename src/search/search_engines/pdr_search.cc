@@ -312,6 +312,13 @@ namespace pdr_search
     {
         for(size_t i = 0; i < this->layers.size(); ++i) {
             std::cout << "Layer size " << i << ": " <<  this->layers[i]->size() << std::endl;
+            std::cout << "Layer size (literals) " << i << ": " ;
+            size_t lits = 0; 
+            for (const LiteralSet &ls : this->layers[i]->get_sets()) {
+                lits += ls.size();
+            }
+            std::cout << lits << std::endl;
+
             std::cout << "Seed layer size " << i << ": " << this->seeded_layers_size[i]<<std::endl;
         }
         std::cout << "Total clause propagation time: " << this->clause_propagation_time << std::endl;
