@@ -102,7 +102,6 @@ namespace pdr_search
     // returns true if this literal set models every clause in the layer
     bool models(const Layer &l) const;
 
-    void simplify();
 
     std::size_t hash() const;
   };

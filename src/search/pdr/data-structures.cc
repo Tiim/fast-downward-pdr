@@ -368,21 +368,6 @@ namespace pdr_search
     return v.hash();
   }
 
-  void LiteralSet::simplify()
-  {
-    for (const auto &l : literals)
-    {
-      // a ∧ ¬ a ∧ ... = a ∧ ¬ a = ⊥
-      // b ∨ ¬ b ∨ ... = b ∨ ¬ b = ⊤
-      if (contains_literal(l.invert()))
-      {
-        literals.clear();
-        literals.insert(l);
-        literals.insert(l.invert());
-      }
-    }
-  }
-
   Obligation::Obligation(const LiteralSet &s, int p, std::shared_ptr<Obligation> par) : parent(par), state(s), priority(p)
   {
     assert(s.is_cube());
@@ -486,7 +471,6 @@ namespace pdr_search
   {
     assert(c.get_set_type() == set_type);
     this->sets.insert(c);
-    hash_cached = false;
   }
 
   bool SetOfLiteralSets::contains_set(const LiteralSet &c) const
