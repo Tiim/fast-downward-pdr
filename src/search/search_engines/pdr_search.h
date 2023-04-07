@@ -33,7 +33,10 @@ namespace pdr_search
         std::shared_ptr<PDRHeuristic> heuristic;
         std::vector<std::shared_ptr<Layer>> layers;
         std::vector<std::size_t> seeded_layers_size;
-        std::int64_t seeding_time_ns = 0;
+        utils::Timer seeding_time = utils::Timer(false);
+        utils::Timer extend_time = utils::Timer(false);
+        utils::Timer path_construction_time = utils::Timer(false);
+        utils::Timer clause_propagation_time = utils::Timer(false);
         std::size_t obligation_expansions = 0;
 
 

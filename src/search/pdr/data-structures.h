@@ -176,7 +176,7 @@ namespace pdr_search
     void set_child(std::shared_ptr<Layer> c);
 
     const std::unordered_set<LiteralSet, LiteralSetHash> get_sets() const;
-    bool contains_set(LiteralSet &ls) const;
+    bool contains_set(const LiteralSet &ls) const;
     std::shared_ptr<Layer> get_child() const;
     // Automatically adds the set also to the parents of the set (L_{j}) for j = 0,...,i-1
     // See Suda, 3.6.1 Representation of the Layers

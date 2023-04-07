@@ -131,7 +131,7 @@ namespace pdr_search
   {
     os << COLOR_RED "{";
     bool first = true;
-    for (auto c : ls.literals)
+    for (const auto &c : ls.literals)
     {
       if (!first && ls.set_type == SetType::CUBE)
       {
@@ -160,7 +160,7 @@ namespace pdr_search
   LiteralSet LiteralSet::invert() const
   {
     std::unordered_set<Literal, LiteralHash> new_set;
-    for (auto l : literals)
+    for (const auto &l : literals)
     {
       new_set.insert(l.invert());
     }
@@ -179,7 +179,7 @@ namespace pdr_search
   LiteralSet LiteralSet::pos() const
   {
     std::unordered_set<Literal,LiteralHash> new_set;
-    for (auto l : literals)
+    for (const auto &l : literals)
     {
       new_set.insert(l.pos());
     }
@@ -230,7 +230,7 @@ namespace pdr_search
   void LiteralSet::apply_cube(const LiteralSet &l)
   {
     assert(l.is_cube());
-    for (auto lit : l.get_literals())
+    for (const auto &lit : l.get_literals())
     {
       apply_literal(lit);
     }
@@ -247,7 +247,7 @@ namespace pdr_search
     {
       return false;
     }
-    for (Literal l : literals)
+    for (const Literal &l : literals)
     {
       if (!ls.contains_literal(l))
       {
@@ -261,7 +261,7 @@ namespace pdr_search
   {
     assert(set_type == s.set_type);
     LiteralSet tmp = LiteralSet(literals, set_type);
-    for (auto l : s.literals)
+    for (const auto &l : s.literals)
     {
       tmp.add_literal(l);
     }
@@ -282,7 +282,7 @@ namespace pdr_search
       small = &s;
       big = this;
     }
-    for (auto l : big->literals)
+    for (const auto &l : big->literals)
     {
       if (small->contains_literal(l))
       {
@@ -299,7 +299,7 @@ namespace pdr_search
   LiteralSet LiteralSet::set_minus(const LiteralSet &s) const
   {
     std::unordered_set<Literal,LiteralHash> nliterals;
-    for (auto l : literals)
+    for (const auto &l : literals)
     {
       if (!s.contains_literal(l))
       {
@@ -317,7 +317,7 @@ namespace pdr_search
     if (c.is_clause())
     {
       // rhs must contain at least one literal from the lhs
-      for (auto cl : c.literals)
+      for (const auto &cl : c.literals)
       {
         if (contains_literal(cl))
         {
@@ -338,7 +338,7 @@ namespace pdr_search
     const Layer *layer = &l;
     while (layer != nullptr)
     {
-        for (auto c : layer->get_delta())
+        for (const auto &c : layer->get_delta())
         {
           if (!models(c))
           {
@@ -357,7 +357,7 @@ namespace pdr_search
     s.insert(this->literals.begin(), this->literals.end());
     utils::HashState hs;
     utils::feed(hs, this->set_type);
-    for (auto l: this->literals) {
+    for (const auto &l: this->literals) {
         utils::feed(hs, l.hash());
     }
     return hs.get_hash64();
@@ -370,7 +370,7 @@ namespace pdr_search
 
   void LiteralSet::simplify()
   {
-    for (auto l : literals)
+    for (const auto &l : literals)
     {
       // a ∧ ¬ a ∧ ... = a ∧ ¬ a = ⊥
       // b ∨ ¬ b ∨ ... = b ∨ ¬ b = ⊤
@@ -434,7 +434,7 @@ namespace pdr_search
   }
   SetOfLiteralSets::SetOfLiteralSets(const std::unordered_set<LiteralSet, LiteralSetHash> &s, SetType type) : set_type(type), sets(s)
   {
-    for (auto set : s)
+    for (const auto &set : s)
     {
       assert(set.get_set_type() == type);
     }
@@ -457,7 +457,7 @@ namespace pdr_search
   {
     os << COLOR_CYAN "Set{";
     bool first = true;
-    for (auto c : s.get_sets())
+    for (const auto &c : s.get_sets())
     {
       if (first)
       {
@@ -501,7 +501,7 @@ namespace pdr_search
     {
       return false;
     }
-    for (LiteralSet c : this->get_sets())
+    for (const LiteralSet &c : this->get_sets())
     {
       if (!s.contains_set(c))
       {
@@ -528,7 +528,7 @@ namespace pdr_search
     /*     inserter(result, result.end())); */
 
     SetOfLiteralSets lnew = SetOfLiteralSets();
-    for (auto clause : result)
+    for (const auto &clause : result)
     {
       lnew.add_set(clause);
     }
@@ -540,7 +540,7 @@ namespace pdr_search
   {
     utils::HashState hs;
     utils::feed(hs, this->set_type);
-    for(LiteralSet ls : this->sets) {
+    for (const LiteralSet &ls : this->sets) {
         utils::feed(hs, ls.hash());
     }
     return hs.get_hash64();
@@ -561,7 +561,7 @@ namespace pdr_search
 
   Layer::Layer(const std::unordered_set<LiteralSet> &c,std::shared_ptr<Layer> ci, std::shared_ptr<Layer> p ) : parent(p), child(ci)
   {
-    for (LiteralSet ls : c)
+    for (const LiteralSet &ls : c)
     {
       assert(ls.is_clause());
       add_set(ls);
@@ -580,7 +580,7 @@ namespace pdr_search
   {
     os << COLOR_CYAN "Layer{";
     bool first = true;
-    for (auto c : l.get_sets())
+    for (const auto &c : l.get_sets())
     {
       if (first)
       {
@@ -606,7 +606,7 @@ namespace pdr_search
     std::unordered_set<LiteralSet, LiteralSetHash> sets;
     const Layer *child = this;
     while (child != nullptr) {
-        for (LiteralSet s : child->get_delta()) {
+        for (const LiteralSet &s : child->get_delta()) {
             sets.insert(sets.end(), s);
         }
         child = child->child.get();
@@ -623,7 +623,7 @@ namespace pdr_search
       std::cout << " Layer "<< (this->parent?"(p)":"" )<<(this->child?"(c)":"");
       //std::cout << *this << std::endl;
       std::cout << "Layer delta: ";
-      for (auto s : this->get_delta()) {
+      for (const auto &s : this->get_delta()) {
           std::cout << s << ", ";
       }
       std::cout << std::endl;
@@ -693,7 +693,7 @@ namespace pdr_search
       /*     << s << std::endl; */
       return false;
     }
-    for (LiteralSet c : this->get_sets())
+    for (const LiteralSet &c : this->get_sets())
     {
       if (!s.contains_set(c))
       {
@@ -719,7 +719,7 @@ namespace pdr_search
   }
 
 
-  bool Layer::contains_set(LiteralSet &c) const
+  bool Layer::contains_set(const LiteralSet &c) const
   {
     const Layer* child = this;
     while (child != nullptr) {
