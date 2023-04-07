@@ -25,6 +25,7 @@ namespace pdr_search
 
     std::pair<LiteralSet, bool> PDRSearch::extend(LiteralSet s, Layer L)
     {
+        extend_time.resume();
         // std::cout << "e1: Call to extend" << std::endl;
         // std::cout << "e1: s = " << s << std::endl;
         // std::cout << "e1: L = " << L << std::endl;
@@ -101,6 +102,8 @@ namespace pdr_search
                 // std::cout << "e12: t = " << t << std::endl;
                 // output condition of successor
                 assert(t.models(L));
+
+                this->extend_time.stop();
                 return std::pair<LiteralSet, bool>(t, true);
             }
 
@@ -213,6 +216,7 @@ namespace pdr_search
         // std::cout << "e29: s=" << s << std::endl;
         // output condition of reason.
         assert(r.is_subset_eq_of(s));
+        this->extend_time.stop();
         return std::pair<LiteralSet, bool>(r, false);
     }
 
@@ -226,7 +230,7 @@ namespace pdr_search
         }
         else if (i == 0)
         {
-            auto begin = std::chrono::high_resolution_clock::now();
+            this->seeding_time.resume();
             // no parent layer -> nullptr
             std::shared_ptr<Layer> l0 = std::shared_ptr<Layer>(new Layer(nullptr, nullptr));
             this->heuristic->initial_heuristic_layer(0, l0);
@@ -241,9 +245,7 @@ namespace pdr_search
             // std::cout << "Layer 0 (goal): " << l0 << std::endl;
             /* std::cout << "Layer 0 (goal) size: " << l0->size() << " clauses" << std::endl; */
             
-            auto end = std::chrono::high_resolution_clock::now();
-            
-            this->seeding_time_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(end-begin).count();
+            this->seeding_time.stop();     
         
             //std::cout << "Initial Heuristic Layer " << 0 << ": " << l0 << std::endl;
             this->layers.insert(this->layers.end(), l0);
@@ -252,8 +254,7 @@ namespace pdr_search
         }
         else
         {
-
-            auto begin = std::chrono::high_resolution_clock::now();
+            this->seeding_time.resume();
             std::shared_ptr<Layer> parent = get_layer(i-1);
             std::shared_ptr<Layer> l_i = std::shared_ptr<Layer>(new Layer(nullptr, parent));
             parent->set_child(l_i);
@@ -274,12 +275,11 @@ namespace pdr_search
                 // std::cout << "Initial Heuristic Layer " << i << ": " << l_i << std::endl;
             } 
             
-            auto end = std::chrono::high_resolution_clock::now();
-            this->seeding_time_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(end-begin).count();
 
             // std::cout << "Layer " << i << ": " << l_i << std::endl;
             /* std::cout << "Layer " << i << " size: " << l_i->size() << " clauses" << std::endl; */
 
+            this->seeding_time.stop();
             this->layers.insert(this->layers.end(), l_i);
             this->seeded_layers_size.insert(this->seeded_layers_size.end(),l_i->size()); 
             return layers[i];
@@ -314,7 +314,10 @@ namespace pdr_search
             std::cout << "Layer size " << i << ": " <<  this->layers[i]->size() << std::endl;
             std::cout << "Seed layer size " << i << ": " << this->seeded_layers_size[i]<<std::endl;
         }
-        std::cout << "Total seeding time: " << this->seeding_time_ns << " nanoseconds" <<std::endl;
+        std::cout << "Total clause propagation time: " << this->clause_propagation_time << std::endl;
+        std::cout << "Total extend time: " << this->extend_time << std::endl;
+        std::cout << "Total path construction phase time: " << this->path_construction_time << std::endl;
+        std::cout << "Total seeding time: " << this->seeding_time <<std::endl;
         std::cout << "Total expanded obligations: " << this->obligation_expansions << std::endl;
 
         statistics.print_detailed_statistics();
@@ -357,6 +360,8 @@ namespace pdr_search
 
         // std::cout << "4: Path construction" << std::endl;
         // line 5
+
+        this->path_construction_time.resume();
         auto s_i = from_state(this->task_proxy.get_initial_state());
         if (s_i.models(*get_layer(k)))
         {
@@ -391,6 +396,7 @@ namespace pdr_search
                     extract_path(si, s_i);
                     // std::cout << "Step: i" << s_i << std::endl;
                     // std::cout << "Plan: " << std::endl;
+                    this->path_construction_time.stop();
                     return SearchStatus::SOLVED;
                 }
 
@@ -438,8 +444,10 @@ namespace pdr_search
                 }
             }
         }
+        this->path_construction_time.stop();
 
         // Clause propagation
+        this->clause_propagation_time.resume();
         auto A = this->task_proxy.get_operators();
 
         // std::cout << "clause propagation start" << std::endl;
@@ -503,6 +511,7 @@ namespace pdr_search
             {
                 // line 30
                 // std::cout << "30: No plan possible" << std::endl;
+                this->clause_propagation_time.stop();
                 return SearchStatus::FAILED;
             }
             // std::cout << "clause propagation " << i <<std::endl;
@@ -511,6 +520,7 @@ namespace pdr_search
                 assert(this->layers[j + 1]->is_subset_eq_of(*(this->layers[j])));
             }
         }
+        this->clause_propagation_time.stop();
 
         // if (enable_layer_simplification)
         // {
