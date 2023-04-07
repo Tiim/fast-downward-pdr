@@ -352,14 +352,17 @@ namespace pdr_search
 
   std::size_t LiteralSet::hash() const
   {
-    // for predictable ordering
-    std::set<Literal> s;
-    s.insert(this->literals.begin(), this->literals.end());
     utils::HashState hs;
     utils::feed(hs, this->set_type);
-    for (const auto &l: this->literals) {
-        utils::feed(hs, l.hash());
+    utils::feed(hs, this->literals.size());
+
+    // for ordering independent hash function
+    size_t literal_hash = 0;
+    for (const auto &s: this->literals) {
+        literal_hash ^= s.hash();
     }
+
+    utils::feed(hs, literal_hash);
     return hs.get_hash64();
   }
 
@@ -438,6 +441,7 @@ namespace pdr_search
   {
     return set_type == s.set_type && get_sets() == s.get_sets();
   }
+
   std::ostream &operator<<(std::ostream &os, const SetOfLiteralSets &s)
   {
     os << COLOR_CYAN "Set{";
@@ -525,9 +529,15 @@ namespace pdr_search
   {
     utils::HashState hs;
     utils::feed(hs, this->set_type);
-    for (const LiteralSet &ls : this->sets) {
-        utils::feed(hs, ls.hash());
+    utils::feed(hs, this->sets.size());
+
+    // for ordering independent hash function
+    size_t literal_hash = 0;
+    for (const auto &s: this->sets) {
+        literal_hash ^= s.hash();
     }
+
+    utils::feed(hs, literal_hash);
     return hs.get_hash64();
   }
 
