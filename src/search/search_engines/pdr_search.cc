@@ -41,8 +41,9 @@ namespace pdr_search
         SetOfLiteralSets Rnoop = SetOfLiteralSets(SetType::CUBE);
 
         std::unordered_set<SetOfLiteralSets, SetOfLiteralSetsHash> Reasons;
-        for (const LiteralSet &c : L.get_sets())
-        {
+        auto sets = *L.get_sets();
+        for (const LiteralSet &c : sets)
+        { 
             if (!s.models(c))
             {
                 Ls.add_set(c);
@@ -87,7 +88,8 @@ namespace pdr_search
             // std::cout << "e9: t = " << t << std::endl;
             // line 10
             SetOfLiteralSets Lt = SetOfLiteralSets(SetType::CLAUSE);
-            for (const LiteralSet &c : L.get_sets())
+            auto sets = *L.get_sets();
+            for (const LiteralSet &c : sets)
             {
                 if (!t.models(c))
                 {
@@ -314,7 +316,8 @@ namespace pdr_search
             std::cout << "Layer size " << i << ": " <<  this->layers[i]->size() << std::endl;
             std::cout << "Layer size (literals) " << i << ": " ;
             size_t lits = 0; 
-            for (const LiteralSet &ls : this->layers[i]->get_sets()) {
+            auto sets = *this->layers[i]->get_sets();
+            for (const LiteralSet &ls : sets) {
                 lits += ls.size();
             }
             std::cout << lits << std::endl;

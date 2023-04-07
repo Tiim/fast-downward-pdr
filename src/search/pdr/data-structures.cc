@@ -572,7 +572,8 @@ namespace pdr_search
   {
     os << COLOR_CYAN "Layer{";
     bool first = true;
-    for (const auto &c : l.get_sets())
+    auto sets = *l.get_sets();
+    for (const auto &c : sets)
     {
       if (first)
       {
@@ -593,13 +594,13 @@ namespace pdr_search
       this->child = c;
   }
 
-  const std::unordered_set<LiteralSet, LiteralSetHash> Layer::get_sets() const 
+  const std::shared_ptr<std::unordered_set<LiteralSet, LiteralSetHash>> Layer::get_sets() const 
   {
-    std::unordered_set<LiteralSet, LiteralSetHash> sets;
+    std::shared_ptr<std::unordered_set<LiteralSet, LiteralSetHash>> sets(new std::unordered_set<LiteralSet, LiteralSetHash>());
     const Layer *child = this;
     while (child != nullptr) {
         for (const LiteralSet &s : child->get_delta()) {
-            sets.insert(sets.end(), s);
+            sets->insert(sets->end(), s);
         }
         child = child->child.get();
     }
@@ -685,7 +686,8 @@ namespace pdr_search
       /*     << s << std::endl; */
       return false;
     }
-    for (const LiteralSet &c : this->get_sets())
+    auto sets = this->get_sets();
+    for (const LiteralSet &c : sets)
     {
       if (!s.contains_set(c))
       {
