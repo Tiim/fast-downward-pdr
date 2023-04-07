@@ -238,7 +238,7 @@ namespace pdr_search
 
   bool LiteralSet::contains_literal(const Literal &l) const
   {
-    return literals.find(l) != literals.end();
+    return literals.count(l) > 0;
   }
 
   bool LiteralSet::is_subset_eq_of(const LiteralSet &ls) const
@@ -486,13 +486,14 @@ namespace pdr_search
   {
     assert(c.get_set_type() == set_type);
     this->sets.insert(c);
+    hash_cached = false;
   }
 
   bool SetOfLiteralSets::contains_set(const LiteralSet &c) const
   {
     auto s = this->get_sets();
-    auto res = s.find(c);
-    return res != s.end();
+    auto res = s.count(c);
+    return res > 0;
   }
 
   bool SetOfLiteralSets::is_subset_eq_of(const SetOfLiteralSets &s) const
@@ -519,7 +520,7 @@ namespace pdr_search
     std::copy_if(
             se.begin(), se.end(), 
             std::inserter(result, result.end()), 
-            [&lse] (LiteralSet ls) {return lse.find(ls) == lse.end();}
+            [&lse] (LiteralSet ls) {return lse.count(ls) == 0;}
         );
 
     /* set_difference(  */
@@ -646,7 +647,7 @@ namespace pdr_search
     Layer* child = this;
     while (child != nullptr) {
         auto sets = child->get_delta(); 
-        if (sets.find(c) != sets.end()) {
+        if (sets.count(c) > 0) {
             child_already_has_set = true;
             break;
         }
@@ -724,7 +725,7 @@ namespace pdr_search
     const Layer* child = this;
     while (child != nullptr) {
         auto sets = child->get_delta(); 
-        if (sets.find(c) != sets.end()) {
+        if (sets.count(c) > 0) {
             return true;
         }
         child = child->child.get();
