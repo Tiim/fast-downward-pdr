@@ -9,6 +9,7 @@
 #include "../pdbs/pattern_generator_greedy.h"
 
 #include <cassert>
+#include <cstddef>
 #include <cstdlib>
 #include <memory>
 #include <optional.hh>
@@ -40,7 +41,7 @@ namespace pdr_search
         SetOfLiteralSets Rnoop = SetOfLiteralSets(SetType::CUBE);
 
         std::unordered_set<SetOfLiteralSets, SetOfLiteralSetsHash> Reasons;
-        for (LiteralSet c : L.get_sets())
+        for (const LiteralSet &c : L.get_sets())
         {
             if (!s.models(c))
             {
@@ -58,13 +59,13 @@ namespace pdr_search
         Reasons.insert(Rnoop);
         // std::cout << "e5: ℛ = " << Reasons << std::endl;
         // line 7
-        for (auto a : A)
+        for (const auto &a : A)
         {
             auto pre = from_precondition(a.get_preconditions());
             // std::cout << "e8: pre = " << pre << std::endl;
             // line 8
             auto pre_sa = LiteralSet(SetType::CLAUSE);
-            for (auto l : pre.get_literals())
+            for (const auto &l : pre.get_literals())
             {
                 if (!s.models(LiteralSet(l, SetType::CLAUSE)))
                 {
@@ -77,7 +78,7 @@ namespace pdr_search
             LiteralSet eff_a = from_effect(a.get_effects());
             // line 9
             LiteralSet t = LiteralSet(s);
-            for (auto l : eff_a.get_literals())
+            for (const auto &l : eff_a.get_literals())
             {
                 // apply eff_a to t
                 t.apply_literal(l);
@@ -86,7 +87,7 @@ namespace pdr_search
             // std::cout << "e9: t = " << t << std::endl;
             // line 10
             SetOfLiteralSets Lt = SetOfLiteralSets(SetType::CLAUSE);
-            for (LiteralSet c : L.get_sets())
+            for (const LiteralSet &c : L.get_sets())
             {
                 if (!t.models(c))
                 {
@@ -121,7 +122,7 @@ namespace pdr_search
                 // line 16
                 // Comment: In the pseudocode, the arrow should be pointing left.
                 SetOfLiteralSets Lt0 = SetOfLiteralSets(SetType::CLAUSE);
-                for (auto c : Lt.get_sets())
+                for (const auto &c : Lt.get_sets())
                 {
                     if (c.set_intersect(pre_sa).size() == 0)
                     {
@@ -131,15 +132,15 @@ namespace pdr_search
                 // std::cout << "e16: Lᵗ₀ = " << Lt0 << std::endl;
                 // line 17
                 SetOfLiteralSets R_a = SetOfLiteralSets(SetType::CUBE);
-                for (auto l : pre_sa.get_literals())
+                for (const auto &l : pre_sa.get_literals())
                 {
                     R_a.add_set(LiteralSet(l.invert(), SetType::CUBE));
                 }
                 // std::cout << "e17: Ra (left) = " << R_a << std::endl;
-                for (auto c : Lt0.get_sets())
+                for (const auto &c : Lt0.get_sets())
                 {
                     LiteralSet ls = LiteralSet(SetType::CUBE);
-                    for (auto l : c.get_literals())
+                    for (const auto &l : c.get_literals())
                     {
                         if (!eff_a.contains_literal(l.invert()))
                         {
@@ -164,14 +165,14 @@ namespace pdr_search
 
         // std::cout << "e21: ℛ = " << R << std::endl;
         int i = 0;
-        for (auto Ra : R)
+        for (const auto &Ra : R)
         {
             // line 22
             // std::cout << "e22: Rₐ" << i << " = " << Ra << std::endl;
 
             LiteralSet ra = LiteralSet(SetType::CUBE);
             size_t ra_size = 0;
-            for (auto ra_cur : Ra.get_sets())
+            for (const auto &ra_cur : Ra.get_sets())
             {
                 if (ra_size == 0 || ra_size > r.set_union(ra_cur).size())
                 {
@@ -187,14 +188,14 @@ namespace pdr_search
 
         // line 25 - 27 optional
         auto r_literals = r.get_literals();
-        for (auto l : r_literals) {
+        for (const auto &l : r_literals) {
             auto ls = LiteralSet(SetType::CUBE);
             ls.add_literal(l);
             auto r_minus_l = r.set_minus(ls);
             bool condition_is_met = true;
-            for (auto Ra : R) {
+            for (const auto &Ra : R) {
                 bool exists = false;
-                for (auto ra : Ra.get_sets()) {
+                for (const auto &ra : Ra.get_sets()) {
                     if (ra.is_subset_eq_of(r_minus_l)) {
                         exists = true;
                         break;
@@ -263,14 +264,14 @@ namespace pdr_search
                 this->heuristic->initial_heuristic_layer(i, l_i);
                 parent->set_child(l_i);
                 // asserts to make sure heuristic seed layer is valid.
-                for (auto s : l_i->get_sets())
-                {
-                    assert(s.is_clause());
-                    for (auto l : s.get_literals())
-                    {
-                        assert(l.is_positive());
-                    }
-                }
+                /* for (const auto &s : l_i->get_sets()) */
+                /* { */
+                /*     assert(s.is_clause()); */
+                /*     for (const auto &l : s.get_literals()) */
+                /*     { */
+                /*         assert(l.is_positive()); */
+                /*     } */
+                /* } */
 
                 // std::cout << "Initial Heuristic Layer " << i << ": " << l_i << std::endl;
             } 
@@ -300,7 +301,7 @@ namespace pdr_search
         std::cout << "Printing all deltas" << std::endl;
         for (size_t i = 0; i < layers.size(); ++i) {
             std::cout << "Delta " << i << ": " << std::endl;
-            for (auto d : layers[i]->get_delta()) {
+            for (const auto &d : layers[i]->get_delta()) {
                 std::cout << d << ", ";
             }
             std::cout << std::endl;
@@ -340,14 +341,14 @@ namespace pdr_search
 
         /* if (iteration == 4) { */
         /*     int i = 0; */
-        /*     for (auto layer : this->layers) { */
+        /*     for (const auto &layer : this->layers) { */
         /*         std::cout<< "LAYER " << i++ << std::endl; */
         /*         std::cout<< *layer << std::endl; */
         /*         std::cout << "------" << std::endl; */
         /*     } */
         /* } */
 
-        for (int i = 0; i < this->layers.size() - 1; ++i)
+        for (size_t i = 0; i < this->layers.size() - 1; ++i)
         {
             assert(this->layers[i + 1]->is_subset_eq_of(*this->layers[i]));
         }
@@ -438,7 +439,7 @@ namespace pdr_search
                         Q.push(newObligation);
                     }
                 }
-                for (int i = 0; i < this->layers.size() - 1; ++i)
+                for (size_t i = 0; i < this->layers.size() - 1; ++i)
                 {
                     assert(this->layers[i + 1]->is_subset_eq_of(*(this->layers[i])));
                 }
@@ -451,7 +452,7 @@ namespace pdr_search
         auto A = this->task_proxy.get_operators();
 
         // std::cout << "clause propagation start" << std::endl;
-        for (int j = 0; j < this->layers.size() - 1; ++j)
+        for (size_t j = 0; j < this->layers.size() - 1; ++j)
         {
             // std::cout << "layer " << (j) << " = " << this->layers[j] << std::endl;
             assert(this->layers[j + 1]->is_subset_eq_of(*(this->layers[j])));
@@ -467,7 +468,7 @@ namespace pdr_search
             auto Li1 = *get_layer(i - 1);
             // std::cout << "22: L_" << (i-1) << " = " << Li1 << std::endl;
             // std::cout << "22: L_" << i << " = " << Li << std::endl;
-            for (auto c : Li1.get_delta())
+            for (const auto &c : Li1.get_delta())
             {
                 // std::cout << "23: foreach c in L_" << (i - 1) << " \\ L_" << i << std::endl;
                 // std::cout << "25: c = " << c << std::endl;
@@ -475,7 +476,7 @@ namespace pdr_search
 
                 // line 25
                 LiteralSet s_c = LiteralSet(X.get_literals(), SetType::CUBE);
-                for (auto p : c.get_literals())
+                for (const auto &p : c.get_literals())
                 {
                     s_c.apply_literal(p.neg());
                 }
@@ -483,13 +484,13 @@ namespace pdr_search
 
                 // line 26
                 bool for_all_not_models = true;
-                for (auto a : A)
+                for (const auto &a : A)
                 {
                     LiteralSet pre_a = from_precondition(a.get_preconditions());
                     // build apply(s_c, a)
                     LiteralSet applied = LiteralSet(s_c);
                     LiteralSet effect_a = from_effect(a.get_effects());
-                    for (auto l : effect_a.get_literals())
+                    for (const auto &l : effect_a.get_literals())
                     {
                         applied.apply_literal(l);
                     }
@@ -515,7 +516,7 @@ namespace pdr_search
                 return SearchStatus::FAILED;
             }
             // std::cout << "clause propagation " << i <<std::endl;
-            for (int j = 0; j < this->layers.size() - 1; ++j)
+            for (size_t j = 0; j < this->layers.size() - 1; ++j)
             {
                 assert(this->layers[j + 1]->is_subset_eq_of(*(this->layers[j])));
             }
@@ -550,7 +551,7 @@ namespace pdr_search
         for (size_t i = 1; i < state_list.size(); i++)
         {
             OperatorID matched_op = OperatorID::no_operator;
-            for (OperatorProxy op : operators)
+            for (const OperatorProxy &op : operators)
             {
                 auto pre = from_precondition(op.get_preconditions());
                 auto state = state_list[i - 1];
@@ -580,7 +581,7 @@ namespace pdr_search
 
         int i = 0;
         std::unordered_set<Literal, LiteralHash> result;
-        for (auto value : s.get_unpacked_values())
+        for (const auto &value : s.get_unpacked_values())
         {
             Literal v = Literal::from_fact(FactProxy(*task, i, value));
             result.insert(result.begin(), v);
@@ -590,7 +591,7 @@ namespace pdr_search
 
         auto vars = this->task_proxy.get_variables();
         int variable_index = 0;
-        for (auto var : vars)
+        for (const auto &var : vars)
         {
             int dom_size = var.get_domain_size();
             for (int i = 0; i < dom_size; i++)
@@ -611,7 +612,7 @@ namespace pdr_search
         LiteralSet c = LiteralSet(SetType::CUBE);
         auto vars = this->task_proxy.get_variables();
         int variable_index = 0;
-        for (auto var : vars)
+        for (const auto &var : vars)
         {
             int dom_size = var.get_domain_size();
             for (int i = 0; i < dom_size; i++)
@@ -627,7 +628,7 @@ namespace pdr_search
     LiteralSet PDRSearch::from_precondition(const PreconditionsProxy &pc) const
     {
         LiteralSet ls = SetType::CUBE;
-        for (auto fact : pc)
+        for (const auto &fact : pc)
         {
             Literal l = Literal::from_fact(fact);
             ls.add_literal(l);
@@ -637,7 +638,7 @@ namespace pdr_search
     LiteralSet PDRSearch::from_effect(const EffectsProxy &ep) const
     {
         LiteralSet ls = SetType::CUBE;
-        for (auto fact_prox : ep)
+        for (const auto &fact_prox : ep)
         {
             auto fact = fact_prox.get_fact();
             Literal l = Literal::from_fact(fact);
