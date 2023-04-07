@@ -124,7 +124,7 @@ namespace pdr_search
                 SetOfLiteralSets Lt0 = SetOfLiteralSets(SetType::CLAUSE);
                 for (const auto &c : Lt.get_sets())
                 {
-                    if (c.set_intersect(pre_sa).size() == 0)
+                    if (c.set_intersect_size(pre_sa) == 0)
                     {
                         Lt0.add_set(c);
                     }

@@ -90,7 +90,7 @@ namespace pdr_search
     bool contains_literal(const Literal &l) const;
     bool is_subset_eq_of(const LiteralSet &ls) const;
     LiteralSet set_union(const LiteralSet &s) const;
-    LiteralSet set_intersect(const LiteralSet &s) const;
+    size_t set_intersect_size(const LiteralSet &s) const;
     LiteralSet set_minus(const LiteralSet &s) const;
 
     // Returns true if this LiteralSet is a model

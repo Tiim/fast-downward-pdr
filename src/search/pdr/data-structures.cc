@@ -271,10 +271,10 @@ namespace pdr_search
     return tmp;
   }
 
-  LiteralSet LiteralSet::set_intersect(const LiteralSet &s) const
+  size_t LiteralSet::set_intersect_size(const LiteralSet &s) const
   {
     assert(set_type == s.set_type);
-    auto output = LiteralSet(set_type);
+    size_t count = 0;
 
     const LiteralSet *small = this, *big = &s;
     if (this->size() >= s.size())
@@ -286,14 +286,11 @@ namespace pdr_search
     {
       if (small->contains_literal(l))
       {
-        output.add_literal(l);
+        count += 1; 
       }
     }
 
-    assert(output.is_subset_eq_of(*this));
-    assert(output.is_subset_eq_of(s));
-
-    return output;
+    return count;
   }
 
   LiteralSet LiteralSet::set_minus(const LiteralSet &s) const
