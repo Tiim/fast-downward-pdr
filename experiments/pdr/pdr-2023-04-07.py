@@ -42,7 +42,7 @@ DRIVER_OPTIONS = ["--overall-time-limit", "45m"]
 
 # TODO: change these
 REVS = [
-    ("5406466713eb3b75320ace7f90cc93b1c1f13a3c", "latest"),
+    ("PDR-thesis", "latest"),
     ("a50720128335f5416b6da6f182a79d91ae63b895", "unoptimized"),
 ]
 
