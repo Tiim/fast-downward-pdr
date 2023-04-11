@@ -59,6 +59,12 @@ def main():
         type=int,
     )
     parser.add_pattern(
+        "pattern_size",
+        r"Pattern size: (\d+),",
+        required=False,
+        type=int,
+    )
+    parser.add_pattern(
         "clause_propagation_time",
         r"Total clause propagation time: (.*)s\n",
         required=False,
