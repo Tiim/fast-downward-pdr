@@ -41,14 +41,14 @@ def main():
         type=int,
     )
     parser.add_repeated_pattern(
-        "layer_size_seeded",
-        r"Seed layer size \d+: (\d+)\n",
+        "layer_size_literals",
+        r"Layer size \(literals\) \d+: (\d+)\n",
         required=False,
         type=int,
     )
-    parser.add_pattern(
-        "layer_seed_time",
-        r"Total seeding time: (\d+) nanoseconds\n",
+    parser.add_repeated_pattern(
+        "layer_size_seeded",
+        r"Seed layer size \d+: (\d+)\n",
         required=False,
         type=int,
     )
@@ -57,6 +57,30 @@ def main():
         r"Total expanded obligations: (\d+)\n",
         required=False,
         type=int,
+    )
+    parser.add_pattern(
+        "clause_propagation_time",
+        r"Total clause propagation time: (.*)s\n",
+        required=False,
+        type=float,
+    )
+    parser.add_pattern(
+        "extend_time",
+        r"Total extend time: (.*)s\n",
+        required=False,
+        type=float,
+    )
+    parser.add_pattern(
+        "pasth_construction_time",
+        r"Total path construction phase time: (.*)s\n",
+        required=False,
+        type=float,
+    )
+    parser.add_pattern(
+        "layer_seed_time",
+        r"Total seeding time: (.*)s\n",
+        required=False,
+        type=float,
     )
     parser.parse()
 
