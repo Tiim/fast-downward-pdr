@@ -15,9 +15,11 @@ REVISION_CACHE = os.environ.get("DOWNWARD_REVISION_CACHE")
 if project.REMOTE:
     SUITE = project.SUITE_UNIT_COST
     ENV = project.BaselSlurmEnvironment(email="tim.bachmann@stud.unibas.ch")
+    print("This is just a test script, don't run it on the cluster")
+    exit(1)
 else:
-    SUITE = ["grid"]  # project.SUITE_UNIT_COST[:1]
-    ENV = project.LocalEnvironment(processes=4)
+    SUITE = ["blocks:probBLOCKS-4-0.pddl"]
+    ENV = project.LocalEnvironment(processes=1)
 
 # TODO: change these to pdr
 CONFIGS = [
@@ -43,7 +45,6 @@ DRIVER_OPTIONS = ["--overall-time-limit", "45m"]
 # TODO: change these
 REVS = [
     ("PDR-thesis", "latest"),
-    ("reason-minimization", "rm"),
 ]
 
 ATTRIBUTES = [

@@ -83,6 +83,7 @@ exp.add_parser(exp.PLANNER_PARSER)
 
 exp.add_step("build", exp.build)
 exp.add_step("start", exp.start_runs)
+exp.add_parse_again_step()
 exp.add_fetcher(name="fetch")
 
 project.add_absolute_report(
