@@ -8,7 +8,7 @@ from downward.experiment import FastDownwardExperiment
 from downward.reports.absolute import AbsoluteReport
 from downward.reports.scatter import ScatterPlotReport
 from downward.reports.taskwise import TaskwiseReport
-from lab import tools
+from lab import tools, environments
 from lab.environments import (
     BaselSlurmEnvironment,
     LocalEnvironment,
@@ -16,7 +16,7 @@ from lab.environments import (
 )
 from lab.experiment import ARGPARSER
 from lab.reports import Attribute, geometric_mean
-
+from lab.steps import get_step
 
 # Silence import-unused messages. Experiment scripts may use these imports.
 assert (
@@ -38,7 +38,8 @@ REMOTE = NODE.endswith((".scicore.unibas.ch", ".cluster.bc2.ch")) or re.match(
 
 
 def parse_args():
-    ARGPARSER.add_argument("--tex", action="store_true", help="produce LaTeX output")
+    ARGPARSER.add_argument("--tex", action="store_true",
+                           help="produce LaTeX output")
     ARGPARSER.add_argument(
         "--relative", action="store_true", help="make relative scatter plots"
     )
@@ -211,7 +212,6 @@ SUITE_UNIT_COST = ["airport", "barman-opt14-strips", "blocks", "childsnack-opt14
 # fmt: on
 
 
-
 DOMAIN_RENAMINGS = {}
 for group_name, domains in DOMAIN_GROUPS.items():
     for domain in domains:
@@ -340,3 +340,21 @@ def add_absolute_report(exp, *, name=None, outfile=None, **kwargs):
     if not REMOTE:
         exp.add_step(f"open-{name}", subprocess.call, ["xdg-open", outfile])
     exp.add_step(f"publish-{name}", subprocess.call, ["publish", outfile])
+
+
+class CustomFastDownwardExperiment (FastDownwardExperiment):
+    def __init__(self, path=None, environment=None, revision_cache=None):
+        FastDownwardExperiment.__init__(self, path=path, environment=environment, revision_cache=revision_cache)
+        self.report_steps = []
+
+    def add_report(self, report, name="", eval_dir="", outfile=""):
+        FastDownwardExperiment.add_report(self, report, name=name, eval_dir=eval_dir, outfile=outfile)
+        last_step = self.steps.pop()
+        self.report_steps.append(last_step)
+
+    def init_reports(self):
+        self.add_step("create_reports", self.run_reports)
+
+    def run_reports(self):
+        env = environments.LocalEnvironment()
+        env.run_steps(self.report_steps)
