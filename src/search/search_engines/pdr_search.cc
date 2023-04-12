@@ -41,14 +41,15 @@ namespace pdr_search
         SetOfLiteralSets Rnoop = SetOfLiteralSets(SetType::CUBE);
 
         std::unordered_set<SetOfLiteralSets, SetOfLiteralSetsHash> Reasons;
-        auto sets = *L.get_sets();
-        for (const LiteralSet &c : sets)
+        auto sets = L.get_sets();
+        /* for (const LiteralSet &c : sets) */
+        for (auto c = sets->begin(); c != sets->end(); ++c) 
         { 
-            if (!s.models(c))
+            if (!s.models(*c))
             {
-                Ls.add_set(c);
+                Ls.add_set(*c);
                 // line 3
-                Rnoop.add_set(c.invert());
+                Rnoop.add_set(c->invert());
             }
         }
         // std::cout << "e2: Lˢ = " << Ls << std::endl;
@@ -88,12 +89,13 @@ namespace pdr_search
             // std::cout << "e9: t = " << t << std::endl;
             // line 10
             SetOfLiteralSets Lt = SetOfLiteralSets(SetType::CLAUSE);
-            auto sets = *L.get_sets();
-            for (const LiteralSet &c : sets)
+            auto sets = L.get_sets();
+            /* for (const LiteralSet &c : sets) */
+            for (auto c = sets->begin(); c != sets->end(); ++c)
             {
-                if (!t.models(c))
+                if (!t.models(*c))
                 {
-                    Lt.add_set(c);
+                    Lt.add_set(*c);
                 }
             }
             // std::cout << "e10: Lᵗ = " << Lt << std::endl;
@@ -290,7 +292,7 @@ namespace pdr_search
 
     void PDRSearch::initialize()
     {
-        auto L0 = *get_layer(0);
+        auto L0 = get_layer(0);
     }
 
     void printLayers(std::vector<std::shared_ptr<Layer>> layers) {
@@ -316,9 +318,11 @@ namespace pdr_search
             std::cout << "Layer size " << i << ": " <<  this->layers[i]->size() << std::endl;
             std::cout << "Layer size (literals) " << i << ": " ;
             size_t lits = 0; 
-            auto sets = *this->layers[i]->get_sets();
-            for (const LiteralSet &ls : sets) {
-                lits += ls.size();
+            auto sets = this->layers[i]->get_sets();
+            /* for (const LiteralSet &ls : sets) { */
+            for (auto ls = sets->begin(); ls != sets->end(); ++ls)
+            {
+                lits += ls->size();
             }
             std::cout << lits << std::endl;
 
@@ -474,10 +478,11 @@ namespace pdr_search
         {
             // std::cout << "22: foreach i = " << i << " of " << k + 1 << std::endl;
             // line 23
-            auto Li1 = *get_layer(i - 1);
+            std::shared_ptr<Layer> Li1 = get_layer(i - 1);
             // std::cout << "22: L_" << (i-1) << " = " << Li1 << std::endl;
             // std::cout << "22: L_" << i << " = " << Li << std::endl;
-            for (const auto &c : Li1.get_delta())
+            auto delta = Li1->get_delta();
+            for (const auto c : delta)
             {
                 // std::cout << "23: foreach c in L_" << (i - 1) << " \\ L_" << i << std::endl;
                 // std::cout << "25: c = " << c << std::endl;
