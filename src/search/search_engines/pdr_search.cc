@@ -304,7 +304,8 @@ namespace pdr_search
         std::cout << "Printing all deltas" << std::endl;
         for (size_t i = 0; i < layers.size(); ++i) {
             std::cout << "Delta " << i << ": " << std::endl;
-            for (const auto &d : layers[i]->get_delta()) {
+            auto delta = *layers[i]->get_delta();
+            for (const auto &d : delta) {
                 std::cout << d << ", ";
             }
             std::cout << std::endl;
@@ -481,7 +482,7 @@ namespace pdr_search
             std::shared_ptr<Layer> Li1 = get_layer(i - 1);
             // std::cout << "22: L_" << (i-1) << " = " << Li1 << std::endl;
             // std::cout << "22: L_" << i << " = " << Li << std::endl;
-            auto delta = Li1->get_delta();
+            auto delta = *Li1->get_delta();
             for (const auto c : delta)
             {
                 // std::cout << "23: foreach c in L_" << (i - 1) << " \\ L_" << i << std::endl;
@@ -522,7 +523,7 @@ namespace pdr_search
                     // std::cout << "27: Push clause to L_" << i << ": c = " << c << ", L = " << *get_layer(i) << std::endl;
                 }
             }
-            if (get_layer(i-1)->get_delta().empty())
+            if (get_layer(i-1)->get_delta()->empty())
             {
                 // line 30
                 // std::cout << "30: No plan possible" << std::endl;

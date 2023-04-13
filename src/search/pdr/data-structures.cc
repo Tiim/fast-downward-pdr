@@ -335,7 +335,8 @@ namespace pdr_search
     const Layer *layer = &l;
     while (layer != nullptr)
     {
-        for (const auto &c : layer->get_delta())
+        auto delta = *layer->get_delta();
+        for (const auto &c : delta)
         {
           if (!models(c))
           {
@@ -543,15 +544,25 @@ namespace pdr_search
      return v.hash(); 
   }
 
-  Layer::Layer(std::shared_ptr<Layer> c, std::shared_ptr<Layer> p) : parent(p), child(c)
+  Layer::Layer(std::shared_ptr<Layer> c, std::shared_ptr<Layer> p) : 
+      parent(p), 
+      child(c), 
+      __sets(std::shared_ptr<std::unordered_set<LiteralSet, LiteralSetHash>>(new std::unordered_set<LiteralSet, LiteralSetHash>())) 
   {
   }
 
-  Layer::Layer(const Layer &l) :  child(l.child), parent(l.parent), __sets(l.get_delta())
+  Layer::Layer(const Layer &l) :  
+      child(l.child), 
+      parent(l.parent), 
+      __sets(std::shared_ptr<std::unordered_set<LiteralSet, LiteralSetHash>>(new std::unordered_set<LiteralSet, LiteralSetHash>(*l.get_delta())))
   {
+      
   }
 
-  Layer::Layer(const std::unordered_set<LiteralSet> &c,std::shared_ptr<Layer> ci, std::shared_ptr<Layer> p ) : parent(p), child(ci)
+  Layer::Layer(const std::unordered_set<LiteralSet> &c,std::shared_ptr<Layer> ci, std::shared_ptr<Layer> p ):
+      parent(p),
+      child(ci), 
+      __sets(std::shared_ptr<std::unordered_set<LiteralSet, LiteralSetHash>>(new std::unordered_set<LiteralSet, LiteralSetHash>())) 
   {
     for (const LiteralSet &ls : c)
     {
@@ -599,7 +610,8 @@ namespace pdr_search
     std::shared_ptr<std::unordered_set<LiteralSet, LiteralSetHash>> sets(new std::unordered_set<LiteralSet, LiteralSetHash>());
     const Layer *child = this;
     while (child != nullptr) {
-        for (const LiteralSet &s : child->get_delta()) {
+        auto delta = *child->get_delta();
+        for (const LiteralSet &s : delta) {
             sets->insert(sets->end(), s);
         }
         child = child->child.get();
@@ -616,7 +628,8 @@ namespace pdr_search
       std::cout << " Layer "<< (this->parent?"(p)":"" )<<(this->child?"(c)":"");
       //std::cout << *this << std::endl;
       std::cout << "Layer delta: ";
-      for (const auto &s : this->get_delta()) {
+      auto delta = *child->get_delta();
+      for (const auto &s : delta) {
           std::cout << s << ", ";
       }
       std::cout << std::endl;
@@ -639,7 +652,7 @@ namespace pdr_search
     Layer* child = this;
     while (child != nullptr) {
         auto sets = child->get_delta(); 
-        if (sets.count(c) > 0) {
+        if (sets->count(c) > 0) {
             child_already_has_set = true;
             break;
         }
@@ -647,14 +660,14 @@ namespace pdr_search
     }
 
     if (!child_already_has_set) {
-        this->__sets.insert(c);
+        this->__sets->insert(c);
     }        
 
     // erase from all parent layers
     // TODO: should be inside of if child_already_has_set
     std::shared_ptr<Layer> parent = this->parent;
     while (parent != nullptr) {
-        parent->__sets.erase(c);
+        parent->__sets->erase(c);
         parent = parent->parent;
     }
     
@@ -672,7 +685,7 @@ namespace pdr_search
   }
 
 
-  const std::unordered_set<LiteralSet, LiteralSetHash> &Layer::get_delta() const 
+  const std::shared_ptr<std::unordered_set<LiteralSet, LiteralSetHash>> Layer::get_delta() const 
   {
       return this->__sets;
   }
@@ -703,10 +716,10 @@ namespace pdr_search
   
   size_t Layer::size() const 
   {
-      size_t sum = this->__sets.size();
+      size_t sum = this->__sets->size();
       Layer *l = this->child.get();
       while (l != nullptr) {
-          sum += l->__sets.size();
+          sum += l->__sets->size();
           l = l->child.get();
       }
       return sum;
@@ -718,7 +731,7 @@ namespace pdr_search
     const Layer* child = this;
     while (child != nullptr) {
         auto sets = child->get_delta(); 
-        if (sets.count(c) > 0) {
+        if (sets->count(c) > 0) {
             return true;
         }
         child = child->child.get();

@@ -181,13 +181,16 @@ namespace pdr_search
     // See Suda, 3.6.1 Representation of the Layers
     void add_set(const LiteralSet &c);
     // Returns a list of literal sets that are in the current layer but not in its child layer.
-    const std::unordered_set<LiteralSet, LiteralSetHash> &get_delta() const;
+    const std::shared_ptr<std::unordered_set<LiteralSet, LiteralSetHash>> get_delta() const;
 
     bool is_subset_eq_of(const Layer &s) const;
     size_t size() const;
 
     void simplify();
     void print_stack() const;
+
   };
+
 }
+
 #endif
