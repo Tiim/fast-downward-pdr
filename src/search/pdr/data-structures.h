@@ -165,7 +165,7 @@ namespace pdr_search
   private:
      std::shared_ptr<Layer> parent;
      std::shared_ptr<Layer> child;
-     std::unordered_set<LiteralSet, LiteralSetHash> __sets;
+     std::shared_ptr<std::unordered_set<LiteralSet, LiteralSetHash>> __sets;
   public:
     Layer(std::shared_ptr<Layer> child, std::shared_ptr<Layer> parent);
     Layer(const Layer &l);
