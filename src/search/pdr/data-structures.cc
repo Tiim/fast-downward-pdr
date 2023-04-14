@@ -415,7 +415,7 @@ namespace pdr_search
   SetOfLiteralSets::SetOfLiteralSets(SetType type) : set_type(type)
   {
   }
-  SetOfLiteralSets::SetOfLiteralSets(const SetOfLiteralSets &s) : set_type(s.set_type), sets(s.get_sets())
+  SetOfLiteralSets::SetOfLiteralSets(const SetOfLiteralSets &s) : set_type(s.set_type), sets(s.sets)
   {
   }
   SetOfLiteralSets::SetOfLiteralSets(const std::unordered_set<LiteralSet, LiteralSetHash> &s, SetType type) : set_type(type), sets(s)
@@ -431,13 +431,13 @@ namespace pdr_search
   SetOfLiteralSets &SetOfLiteralSets::operator=(const SetOfLiteralSets &s)
   {
     set_type = s.set_type;
-    sets = s.get_sets();
+    sets = s.sets;
     return *this;
   }
 
   bool SetOfLiteralSets::operator==(const SetOfLiteralSets &s) const
   {
-    return set_type == s.set_type && get_sets() == s.get_sets();
+    return set_type == s.set_type && sets == s.sets;
   }
 
   std::ostream &operator<<(std::ostream &os, const SetOfLiteralSets &s)
@@ -461,7 +461,7 @@ namespace pdr_search
   }
   size_t SetOfLiteralSets::size() const
   {
-    return get_sets().size();
+    return sets.size();
   }
 
   const std::unordered_set<LiteralSet, LiteralSetHash> SetOfLiteralSets::get_sets() const
@@ -477,8 +477,7 @@ namespace pdr_search
 
   bool SetOfLiteralSets::contains_set(const LiteralSet &c) const
   {
-    auto s = this->get_sets();
-    auto res = s.count(c);
+    auto res = this->sets.count(c);
     return res > 0;
   }
 
@@ -488,7 +487,7 @@ namespace pdr_search
     {
       return false;
     }
-    for (const LiteralSet &c : this->get_sets())
+    for (const LiteralSet &c : this->sets)
     {
       if (!s.contains_set(c))
       {
@@ -500,8 +499,8 @@ namespace pdr_search
 
   SetOfLiteralSets SetOfLiteralSets::set_minus(const SetOfLiteralSets &l) const
   {
-    auto se = get_sets();
-    auto lse = l.get_sets();
+    auto &se = sets;
+    auto &lse = l.sets;
     std::unordered_set<LiteralSet, LiteralSetHash> result;
     std::copy_if(
             se.begin(), se.end(), 
