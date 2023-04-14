@@ -335,8 +335,8 @@ namespace pdr_search
     const Layer *layer = &l;
     while (layer != nullptr)
     {
-        auto delta = *layer->get_delta();
-        for (const auto &c : delta)
+        auto delta = layer->get_delta();
+        for (const auto &c : *delta)
         {
           if (!models(c))
           {
