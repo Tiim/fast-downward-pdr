@@ -231,7 +231,7 @@ namespace pdr_search
   void LiteralSet::apply_cube(const LiteralSet &l)
   {
     assert(l.is_cube());
-    for (const auto &lit : l.get_literals())
+    for (const auto &lit : l.literals)
     {
       apply_literal(lit);
     }
@@ -706,8 +706,8 @@ namespace pdr_search
       /*     << s << std::endl; */
       return false;
     }
-    auto sets = *this->get_sets();
-    for (const LiteralSet &c : sets)
+    auto sets = this->get_sets();
+    for (const LiteralSet &c : *sets)
     {
       if (!s.contains_set(c))
       {
