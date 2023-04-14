@@ -420,7 +420,7 @@ namespace pdr_search
                 if (extended.second)
                 {
                     // extend returns a successor state t
-                    LiteralSet t = extended.first;
+                    LiteralSet &t = extended.first;
                     // line 12
                     Q.push(si);
                     // std::cout << "12: Add obligation to queue: " << *si << std::endl;
@@ -431,7 +431,7 @@ namespace pdr_search
                 else
                 {
                     // line 14 extend returns a reason r
-                    LiteralSet r = extended.first;
+                    LiteralSet &r = extended.first;
                     // line 15
                     // Only add to set L_i, because of layer delta encoding
                     auto L_i = get_layer(i);
@@ -481,8 +481,8 @@ namespace pdr_search
             std::shared_ptr<Layer> Li1 = get_layer(i - 1);
             // std::cout << "22: L_" << (i-1) << " = " << Li1 << std::endl;
             // std::cout << "22: L_" << i << " = " << Li << std::endl;
-            auto delta = *Li1->get_delta();
-            for (const auto c : delta)
+            auto delta = Li1->get_delta();
+            for (const auto c : *delta)
             {
                 // std::cout << "23: foreach c in L_" << (i - 1) << " \\ L_" << i << std::endl;
                 // std::cout << "25: c = " << c << std::endl;
