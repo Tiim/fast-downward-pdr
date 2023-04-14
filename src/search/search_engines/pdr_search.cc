@@ -24,7 +24,7 @@
 namespace pdr_search
 {
 
-    std::pair<LiteralSet, bool> PDRSearch::extend(LiteralSet s, Layer L)
+    std::pair<LiteralSet, bool> PDRSearch::extend(const LiteralSet &s, const Layer &L)
     {
         extend_time.resume();
         // std::cout << "e1: Call to extend" << std::endl;

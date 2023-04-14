@@ -46,7 +46,7 @@ namespace pdr_search
 
         // Returns (t, true) where t is successor state
         // or (r, false) where r is reason
-        std::pair<LiteralSet, bool> extend(LiteralSet s, Layer L);
+        std::pair<LiteralSet, bool> extend(const LiteralSet &s, const Layer &L);
 
     protected:
         virtual void initialize() override;
