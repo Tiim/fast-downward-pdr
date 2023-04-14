@@ -41,6 +41,7 @@ namespace pdr_search
 
 
         int iteration = 0;
+        std::vector<LiteralSet> A_effect; 
 
         std::shared_ptr<Layer> get_layer(long unsigned int i);
 

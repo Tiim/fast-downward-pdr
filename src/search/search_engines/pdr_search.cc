@@ -61,9 +61,9 @@ namespace pdr_search
         Reasons.insert(Rnoop);
         // std::cout << "e5: ℛ = " << Reasons << std::endl;
         // line 7
-        for (const auto &a : A)
+        for (size_t a_i = 0; a_i < A.size(); a_i++)
         {
-            auto pre = from_precondition(a.get_preconditions());
+            auto pre = from_precondition(A[a_i].get_preconditions());
             // std::cout << "e8: pre = " << pre << std::endl;
             // line 8
             auto pre_sa = LiteralSet(SetType::CLAUSE);
@@ -77,7 +77,7 @@ namespace pdr_search
             assert(pre_sa.is_subset_eq_of(pre));
             // std::cout << "e8: preₛᵃ = " << pre_sa << std::endl;
 
-            LiteralSet eff_a = from_effect(a.get_effects());
+            LiteralSet &eff_a = A_effect[a_i]; 
             // line 9
             LiteralSet t = LiteralSet(s);
             for (const auto &l : eff_a.get_literals())
@@ -292,6 +292,10 @@ namespace pdr_search
     void PDRSearch::initialize()
     {
         auto L0 = get_layer(0);
+        for (const auto &a: task_proxy.get_operators()) {
+           A_effect.insert(A_effect.end(), from_effect(a.get_effects()));
+        }
+
     }
 
     void printLayers(std::vector<std::shared_ptr<Layer>> layers) {
@@ -498,12 +502,12 @@ namespace pdr_search
 
                 // line 26
                 bool for_all_not_models = true;
-                for (const auto &a : A)
+                for (size_t a_i = 0; a_i < A.size(); a_i++)
                 {
-                    LiteralSet pre_a = from_precondition(a.get_preconditions());
+                    LiteralSet pre_a = from_precondition(A[a_i].get_preconditions());
                     // build apply(s_c, a)
                     LiteralSet applied = LiteralSet(s_c);
-                    LiteralSet effect_a = from_effect(a.get_effects());
+                    LiteralSet effect_a = A_effect[a_i];
                     for (const auto &l : effect_a.get_literals())
                     {
                         applied.apply_literal(l);
@@ -565,21 +569,21 @@ namespace pdr_search
         for (size_t i = 1; i < state_list.size(); i++)
         {
             OperatorID matched_op = OperatorID::no_operator;
-            for (const OperatorProxy &op : operators)
+            for (size_t a_i = 0; a_i < operators.size(); a_i++)
             {
-                auto pre = from_precondition(op.get_preconditions());
+                auto pre = from_precondition(operators[a_i].get_preconditions());
                 auto state = state_list[i - 1];
                 if (!state.models(pre))
                 {
                     continue;
                 }
-                auto eff = from_effect(op.get_effects());
+                auto eff = A_effect[a_i];
                 state.apply_cube(eff);
                 if (state != state_list[i])
                 {
                     continue;
                 }
-                matched_op = OperatorID(op.get_id());
+                matched_op = OperatorID(operators[a_i].get_id());
                 //std::cout << "Step " << i << " - matching operator " << op.get_name() << std::endl;
             }
             assert(matched_op != OperatorID::no_operator);
