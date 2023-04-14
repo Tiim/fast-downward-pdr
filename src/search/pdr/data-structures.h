@@ -33,6 +33,8 @@ namespace pdr_search
     bool positive = true;
     FactProxy fact;
 
+    mutable size_t hash_cache = 0;
+
   public:
     Literal(int variable, int value, const FactProxy &fp);
     Literal(int variable, int value, bool positive, const FactProxy &fp);

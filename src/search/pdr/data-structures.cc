@@ -11,7 +11,8 @@ namespace pdr_search
   Literal::Literal(int var, int val, bool pos, const FactProxy &f) : variable(var), value(val), positive(pos), fact(f)
   {
   }
-  Literal::Literal(const Literal &l) : variable(l.variable), value(l.value), positive(l.positive), fact(l.fact)
+  Literal::Literal(const Literal &l) : variable(l.variable), value(l.value), positive(l.positive), fact(l.fact),
+    hash_cache(l.hash_cache)
   {
   }
   Literal &Literal::operator=(const Literal &l)
@@ -19,6 +20,7 @@ namespace pdr_search
     variable = l.variable;
     value = l.value;
     fact = l.fact;
+    hash_cache = l.hash_cache;
     return *this;
   }
   bool Literal::operator==(const Literal &l) const
@@ -79,11 +81,14 @@ namespace pdr_search
 
   std::size_t Literal::hash() const 
   {
-    utils::HashState hs;
-    utils::feed(hs, variable);
-    utils::feed(hs, value);
-    utils::feed(hs, positive);
-    return hs.get_hash64();
+    if (hash_cache == 0) {
+        utils::HashState hs;
+        utils::feed(hs, variable);
+        utils::feed(hs, value);
+        utils::feed(hs, positive);
+        hash_cache = hs.get_hash64();
+    }
+    return hash_cache;
   }
 
   std::size_t LiteralHash::operator()(const Literal &v) const
