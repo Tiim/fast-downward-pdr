@@ -610,8 +610,8 @@ namespace pdr_search
     std::shared_ptr<std::unordered_set<LiteralSet, LiteralSetHash>> sets(new std::unordered_set<LiteralSet, LiteralSetHash>());
     const Layer *child = this;
     while (child != nullptr) {
-        auto delta = *child->get_delta();
-        for (const LiteralSet &s : delta) {
+        auto delta = child->get_delta();
+        for (const LiteralSet &s : *delta) {
             sets->insert(sets->end(), s);
         }
         child = child->child.get();
