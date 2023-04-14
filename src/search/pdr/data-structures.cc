@@ -620,9 +620,7 @@ namespace pdr_search
     child = this;
     while (child != nullptr) {
         auto delta = child->get_delta();
-        for (const LiteralSet &s : *delta) {
-            sets->insert(s);
-        }
+        sets->insert(delta->begin(), delta->end());
         child = child->child.get();
     }
     return sets;

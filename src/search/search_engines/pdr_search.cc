@@ -89,7 +89,6 @@ namespace pdr_search
             // std::cout << "e9: t = " << t << std::endl;
             // line 10
             SetOfLiteralSets Lt = SetOfLiteralSets(SetType::CLAUSE);
-            auto sets = L.get_sets();
             /* for (const LiteralSet &c : sets) */
             for (auto c = sets->begin(); c != sets->end(); ++c)
             {
