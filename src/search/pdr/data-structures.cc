@@ -213,11 +213,7 @@ namespace pdr_search
 
   void LiteralSet::add_literal(Literal l)
   {
-    if (contains_literal(l.invert()))
-    {
-      std::cout << "already contains literal: " << *this << " l=" << l << std::endl;
-      assert(false);
-    }
+    assert(!contains_literal(l.invert()));
     literals.insert(literals.begin(), l);
   }
 
