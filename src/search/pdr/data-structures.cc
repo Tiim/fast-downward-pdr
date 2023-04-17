@@ -668,27 +668,14 @@ namespace pdr_search
 
     if (!child_already_has_set) {
         this->__sets->insert(c);
+        //
+        // erase from all parent layers
+        std::shared_ptr<Layer> parent = this->parent;
+        while (parent != nullptr) {
+            parent->__sets->erase(c);
+            parent = parent->parent;
+        }
     }        
-
-    // erase from all parent layers
-    // TODO: should be inside of if child_already_has_set
-    std::shared_ptr<Layer> parent = this->parent;
-    while (parent != nullptr) {
-        parent->__sets->erase(c);
-        parent = parent->parent;
-    }
-    
-    /* std::cout << "-- After adding --" <<std::endl; */
-    /* this->print_stack(); */
-
-    /* std::cout << "---- end add_set ----" << std::endl; */
-
-    //TODO: remove this for performance
-    /* auto all_sets = get_sets(); */
-    /* assert(all_sets.find(c) != all_sets.end()); */
-    /* if (this->parent) { */
-    /*     assert(this->is_subset_eq_of(*(this->parent))); */
-    /* } */
   }
 
 

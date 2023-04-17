@@ -19,7 +19,6 @@
 #include <vector>
 #include <chrono>
 
-// TODO: perf improvements unordered sets
 
 namespace pdr_search
 {
