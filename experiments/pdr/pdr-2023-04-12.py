@@ -4,6 +4,7 @@ import os
 import shutil
 
 import project
+import reports
 
 
 REPO = project.get_repo_base()
@@ -58,7 +59,8 @@ ATTRIBUTES = [
     "obligation_expansions",
 ]
 
-exp = project.CustomFastDownwardExperiment(environment=ENV, revision_cache=REVISION_CACHE)
+exp = project.CustomFastDownwardExperiment(
+    environment=ENV, revision_cache=REVISION_CACHE)
 for config_nick, config in CONFIGS:
     for rev, rev_nick in REVS:
         algo_name = f"{rev_nick}:{config_nick}" if rev_nick else config_nick
@@ -90,11 +92,11 @@ project.add_absolute_report(
 
 attributes = ["total_time"]
 pairs_latest = [
-        ("latest:01-pdr-noop", f"latest:{alg[0]}") for alg in CONFIGS[1:]
+    ("latest:01-pdr-noop", f"latest:{alg[0]}") for alg in CONFIGS[1:]
 ]
 pairs = [
-        # ("latest:01-pdr-noop", "unoptimized:01-pdr-noop"),
-        # ("latest:06-pdr-greedy-1000", "unoptimized:06-pdr-greedy-1000"),
+    # ("latest:01-pdr-noop", "unoptimized:01-pdr-noop"),
+    # ("latest:06-pdr-greedy-1000", "unoptimized:06-pdr-greedy-1000"),
 ]
 
 pairs += pairs_latest
@@ -113,5 +115,35 @@ for algo1, algo2 in pairs:
             ),
             name=f"{exp.name}-{algo1}-vs-{algo2}-{attr}{suffix}",
         )
+
+exp.add_report(
+    reports.ScatterPlotReport(
+        category_x="layer_size",
+        category_y="total_time",
+        format="tex" if project.TEX else "png",
+        show_missing=False,
+    ),
+    name=f"{exp.name}-layer_size-vs-total_time"
+)
+exp.add_report(
+    reports.ScatterPlotReport(
+        category_x="layer_size_literals",
+        category_y="total_time",
+        format="tex" if project.TEX else "png",
+        show_missing=False,
+    ),
+    name=f"{exp.name}-layer_size_literals-vs-total_time"
+)
+exp.add_report(
+    reports.ScatterPlotReport(
+        category_x="layer_size_seeded",
+        category_y="total_time",
+        format="tex" if project.TEX else "png",
+        show_missing=False,
+    ),
+    name=f"{exp.name}-layer_size_seeded-vs-total_time"
+)
+# TODO: Scatterplot layersize vs path construction phase time
+# TODO: Scatterplot layersize vs clause propagation phase time
 
 exp.run_steps()
