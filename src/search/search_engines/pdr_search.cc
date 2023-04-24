@@ -336,6 +336,7 @@ namespace pdr_search
         std::cout << "Total path construction phase time: " << this->path_construction_time << std::endl;
         std::cout << "Total seeding time: " << this->seeding_time <<std::endl;
         std::cout << "Total expanded obligations: " << this->obligation_expansions << std::endl;
+        std::cout << "Total inserted obligations: " << this->obligation_insertions << std::endl;
 
         statistics.print_detailed_statistics();
         search_space.print_statistics();
@@ -390,6 +391,7 @@ namespace pdr_search
             // << "6: Initialize Q " << *o << std::endl;
             std::priority_queue<std::shared_ptr<Obligation>, std::vector<std::shared_ptr<Obligation>>, obligationSort> Q;
             Q.push(o);
+            this->obligation_insertions += 1;
 
             // line 7
             while (!Q.empty())
@@ -430,6 +432,7 @@ namespace pdr_search
                     auto newObligation = std::shared_ptr<Obligation>(new Obligation(t, si->get_priority() - 1, si));
                     Q.push(newObligation);
                     // std::cout << "12: Add obligation to queue: " << *newObligation << std::endl;
+                    this->obligation_insertions += 2;
                 }
                 else
                 {
@@ -453,6 +456,7 @@ namespace pdr_search
                         // line 19
                         auto newObligation = std::shared_ptr<Obligation>(new Obligation(s, i + 1, si->get_parent()));
                         Q.push(newObligation);
+                        this->obligation_insertions += 1;
                     }
                 }
                 for (size_t i = 0; i < this->layers.size() - 1; ++i)

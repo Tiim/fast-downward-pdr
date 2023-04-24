@@ -38,6 +38,7 @@ namespace pdr_search
         utils::Timer path_construction_time = utils::Timer(false);
         utils::Timer clause_propagation_time = utils::Timer(false);
         std::size_t obligation_expansions = 0;
+        std::size_t obligation_insertions = 0;
 
 
         int iteration = 0;
