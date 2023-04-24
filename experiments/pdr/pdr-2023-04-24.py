@@ -16,7 +16,7 @@ if project.REMOTE:
     SUITE = project.SUITE_UNIT_COST
     ENV = project.BaselSlurmEnvironment(email="tim.bachmann@stud.unibas.ch")
 else:
-    SUITE = ["grid"]  # project.SUITE_UNIT_COST[:1]
+    SUITE = ["blocks:probBLOCKS-8-0.pddl"]  # project.SUITE_UNIT_COST[:1]
     ENV = project.LocalEnvironment(processes=4)
 
 # TODO: change these to pdr
@@ -116,26 +116,30 @@ for algo1, algo2 in pairs:
         )
 
 
-def add_generic_scatter(category_x, category_y):
-    exp.add_report(
-        reports.ScatterPlotReport(
-            category_x,
-            category_y,
-            format="tex" if project.TEX else "png",
-            show_missing=False,
-            scale="linear"
-        ),
-        name=f"{exp.name}-{category_x}-vs-{category_y}-linear"
-    )
-    exp.add_report(
-        reports.ScatterPlotReport(
-            category_x,
-            category_y,
-            format="tex" if project.TEX else "png",
-            show_missing=False,
-        ),
-        name=f"{exp.name}-{category_x}-vs-{category_y}"
-    )
+def add_generic_scatter(category_x, category_y, scale="both"):
+    if scale == "linear" or scale == "both":
+        exp.add_report(
+            reports.ScatterPlotReport(
+                category_x,
+                category_y,
+                format="tex" if project.TEX else "png",
+                show_missing=False,
+                scale="linear"
+            ),
+            name=f"{exp.name}-{category_x}-vs-{category_y}-linear"
+        )
+    if scale == "log" or scale == "both":
+        exp.add_report(
+            reports.ScatterPlotReport(
+                category_x,
+                category_y,
+                format="tex" if project.TEX else "png",
+                show_missing=False,
+            ),
+            name=f"{exp.name}-{category_x}-vs-{category_y}"
+        )
+    if scale != "log" and scale != "linear" and scale != "both":
+        raise ValueError(f"scale must be 'log', 'linear' or 'both' got: '{scale}'")
 
 
 # TODO: make linear plot where it makes sense
@@ -146,7 +150,7 @@ add_generic_scatter("layer_size_literals", "clause_propagation_time")
 add_generic_scatter("layer_size_literals", "path_construction_time")
 add_generic_scatter("layer_size_literals", "extend_time")
 add_generic_scatter("pattern_size", "total_time")
-add_generic_scatter("pattern_size", "layer_seed_time")
+add_generic_scatter("pattern_size", "layer_seed_time", "linear")
 add_generic_scatter("pattern_size", "obligation_expansions")
 add_generic_scatter("pattern_size", "obligation_insertions")
 add_generic_scatter("pattern_size", "layer_size_seeded")

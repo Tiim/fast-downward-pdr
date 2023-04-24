@@ -15,6 +15,8 @@ class CommonParser(Parser):
             if required and not matches:
                 logging.error(f"Pattern {regex} not found in file {file}")
             props[name] = [type(m) for m in matches]
+            if type == int or type == float:
+                props[name + "_total"] = sum(props[name])
 
         self.add_function(find_all_occurences, file=file)
 
@@ -59,6 +61,12 @@ def main():
         type=int,
     )
     parser.add_pattern(
+        "obligation_insertions",
+        r"Total inserted obligations: (\d+)\n",
+        required=False,
+        type=int,
+    )
+    parser.add_pattern(
         "pattern_size",
         r"Pattern size: (\d+),",
         required=False,
@@ -77,7 +85,7 @@ def main():
         type=float,
     )
     parser.add_pattern(
-        "pasth_construction_time",
+        "path_construction_time",
         r"Total path construction phase time: (.*)s\n",
         required=False,
         type=float,
