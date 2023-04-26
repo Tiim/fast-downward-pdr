@@ -339,7 +339,7 @@ def add_absolute_report(exp, *, name=None, outfile=None, **kwargs):
     exp.add_report(report, name=name, outfile=outfile)
     if not REMOTE:
         exp.add_step(f"open-{name}", subprocess.call, ["xdg-open", outfile])
-    exp.add_step(f"publish-{name}", subprocess.call, ["publish", outfile])
+    # exp.add_step(f"publish-{name}", subprocess.call, ["publish", outfile])
 
 
 class CustomFastDownwardExperiment (FastDownwardExperiment):
