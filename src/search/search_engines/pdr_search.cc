@@ -488,8 +488,8 @@ namespace pdr_search
             std::shared_ptr<Layer> Li1 = get_layer(i - 1);
             // std::cout << "22: L_" << (i-1) << " = " << Li1 << std::endl;
             // std::cout << "22: L_" << i << " = " << Li << std::endl;
-            auto delta = Li1->get_delta();
-            for (const auto c : *delta)
+            auto delta = *Li1->get_delta();
+            for (const auto c : delta)
             {
                 // std::cout << "23: foreach c in L_" << (i - 1) << " \\ L_" << i << std::endl;
                 // std::cout << "25: c = " << c << std::endl;
