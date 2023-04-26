@@ -267,6 +267,12 @@ def _get_exp_dir_relative_to_repo():
     return repo_name / rel_script_dir / "data" / expname
 
 
+def _get_eval_dir():
+    script = Path(tools.get_script_path())
+    expname = script.stem + "-eval"
+    return Path("data") / expname
+
+
 def add_scp_step(exp, login, repos_dir):
     remote_exp = Path(repos_dir) / _get_exp_dir_relative_to_repo()
     exp.add_step(
@@ -340,6 +346,39 @@ def add_absolute_report(exp, *, name=None, outfile=None, **kwargs):
     if not REMOTE:
         exp.add_step(f"open-{name}", subprocess.call, ["xdg-open", outfile])
     # exp.add_step(f"publish-{name}", subprocess.call, ["publish", outfile])
+
+
+def add_publish_step(exp):
+    exp.add_step("publish", publish_properties)
+
+
+def add_fetch_step(exp):
+    exp.add_step("fetch", read_properties)
+
+
+def publish_properties():
+    p_file = _get_eval_dir() / "properties"
+    urlfile = _get_eval_dir() / 'url.txt'
+    import requests
+
+    with open(p_file, 'rb') as f:
+        response = requests.post('https://0x0.st', files={'file': f})
+        print(response.text)
+        with open(urlfile, 'w') as url_file:
+            url_file.write(response.text)
+
+
+def read_properties():
+    import requests
+    import os
+
+    p_file = _get_eval_dir() / "properties"
+    os.makedirs('folder', exist_ok=True)
+
+    url = input("Enter URL: ")
+    response = requests.get(url)
+    with open(p_file, 'wb') as f:
+        f.write(response.content)
 
 
 class CustomFastDownwardExperiment (FastDownwardExperiment):

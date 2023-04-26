@@ -88,6 +88,8 @@ exp.init_reports()
 project.add_absolute_report(
     exp, attributes=ATTRIBUTES, filter=[project.add_evaluations_per_time]
 )
+project.add_publish_step(exp)
+project.add_fetch_step(exp)
 
 attributes = ["total_time"]
 pairs_latest = [
