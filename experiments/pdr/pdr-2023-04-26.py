@@ -14,7 +14,7 @@ REVISION_CACHE = os.environ.get("DOWNWARD_REVISION_CACHE")
 
 if project.REMOTE:
     SUITE = project.SUITE_UNIT_COST
-    ENV = project.BaselSlurmEnvironment(email="tim.bachmann@stud.unibas.ch")
+    ENV = project.BaselSlurmEnvironment(email="tim.bachmann@stud.unibas.ch", partition="infai_2")
 else:
     SUITE = ["blocks:probBLOCKS-8-0.pddl"]  # project.SUITE_UNIT_COST[:1]
     ENV = project.LocalEnvironment(processes=4)
