@@ -373,7 +373,7 @@ def read_properties():
     import os
 
     p_file = _get_eval_dir() / "properties"
-    os.makedirs('folder', exist_ok=True)
+    os.makedirs(_get_eval_dir(), exist_ok=True)
 
     url = input("Enter URL: ")
     response = requests.get(url)
