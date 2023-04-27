@@ -113,13 +113,19 @@ class ScatterPlotReport(PlanningReport):
             for x, y in coords:
                 if x == 0 and isinstance(x, int):
                     x = None
+                elif x <= 0 and isinstance(x, float):
+                    x += 0.00001
+
                 if y == 0 and isinstance(y, int):
                     y = None
+                elif y <= 0:
+                    y += 0.00001
 
                 if (x is not None and x <= 0) or (y is not None and y <= 0):
                     logging.critical(
                         "Logarithmic axes can only show positive values. "
                         "Use a symlog or linear scale instead."
+                        f"x: {x}, y: {y}"
                     )
                 else:
                     new_coords.append((x, y))
