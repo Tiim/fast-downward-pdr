@@ -352,8 +352,8 @@ def add_publish_step(exp):
     exp.add_step("publish", publish_properties)
 
 
-def add_fetch_step(exp):
-    exp.add_step("fetch", read_properties)
+def add_download_step(exp):
+    exp.add_step("download", read_properties)
 
 
 def publish_properties():
