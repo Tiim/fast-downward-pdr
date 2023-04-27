@@ -91,7 +91,13 @@ project.add_absolute_report(
 project.add_publish_step(exp)
 project.add_download_step(exp)
 
-attributes = ["total_time"]
+# Attributes for algorithm comparisons
+attributes = [
+    "total_time",
+    "obligation_insertions",
+    "obligation_expansions",
+    "path_construction_time",
+]
 pairs_latest = [
     ("latest:01-pdr-noop", f"latest:{alg[0]}") for alg in CONFIGS[1:]
 ]
