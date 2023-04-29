@@ -18,6 +18,7 @@ namespace pdr_search
     auto variables = TaskProxy(*task).get_variables();
 
     std::cout << "Pattern size: " << pattern.size() << ", Variables: " << variables.size() << std::endl;
+    std::cout << "Projected states: " << this->pattern_database->get_size() << std::endl;
     if (pattern.size() == 0) {
         std::cout << "! Warning: empty pattern" << std::endl;
     }

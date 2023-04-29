@@ -96,6 +96,12 @@ def main():
         required=False,
         type=float,
     )
+    parser.add_pattern(
+        "pdb_projected_states",
+        r"Projected states: (.*)\n",
+        required=True,
+        type=int,
+    )
     parser.parse()
 
 
