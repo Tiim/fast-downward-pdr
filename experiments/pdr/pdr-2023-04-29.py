@@ -14,10 +14,10 @@ REVISION_CACHE = os.environ.get("DOWNWARD_REVISION_CACHE")
 
 if project.REMOTE:
     SUITE = project.SUITE_UNIT_COST
-    ENV = project.BaselSlurmEnvironment(email="tim.bachmann@stud.unibas.ch")
+    ENV = project.BaselSlurmEnvironment(email="tim.bachmann@stud.unibas.ch", partition="infai_2")
 else:
     SUITE = ["blocks:probBLOCKS-8-0.pddl"]  # project.SUITE_UNIT_COST[:1]
-    ENV = project.LocalEnvironment(processes=1)
+    ENV = project.LocalEnvironment(processes=4)
 
 # TODO: change these to pdr
 CONFIGS = [
@@ -50,7 +50,6 @@ REVS = [
 
 ATTRIBUTES = [
     "error",
-    "run_dir",
     "total_time",
     "coverage",
     "memory",
@@ -58,7 +57,8 @@ ATTRIBUTES = [
     "layer_size",
     "layer_size_seeded",
     "obligation_expansions",
-    "pdb_projected_states",
+    "obligation_insertions",
+    "pdr_projected_states",
 ]
 
 exp = project.CustomFastDownwardExperiment(
@@ -91,8 +91,19 @@ exp.init_reports()
 project.add_absolute_report(
     exp, attributes=ATTRIBUTES, filter=[project.add_evaluations_per_time]
 )
+project.add_publish_step(exp)
+project.add_download_step(exp)
 
-attributes = ["total_time"]
+# Attributes for algorithm comparisons
+attributes = [
+    "total_time",
+    "obligation_insertions",
+    "obligation_expansions",
+    "path_construction_time",
+    "pattern_size",
+    "layer_size_literals",
+    "memory",
+]
 pairs_latest = [
     ("latest:01-pdr-noop", f"latest:{alg[0]}") for alg in CONFIGS[1:]
 ]
@@ -119,48 +130,59 @@ for algo1, algo2 in pairs:
         )
 
 
-def add_generic_scatter(category_x, category_y, scale="both"):
-    if scale == "linear" or scale == "both":
-        exp.add_report(
-            reports.ScatterPlotReport(
-                category_x,
-                category_y,
-                format="tex" if project.TEX else "png",
-                show_missing=False,
-                scale="linear"
-            ),
-            name=f"{exp.name}-{category_x}-vs-{category_y}-linear"
-        )
-    if scale == "log" or scale == "both":
-        exp.add_report(
-            reports.ScatterPlotReport(
-                category_x,
-                category_y,
-                format="tex" if project.TEX else "png",
-                show_missing=False,
-            ),
-            name=f"{exp.name}-{category_x}-vs-{category_y}"
-        )
+def add_generic_scatter(category_x, category_y, scale="both", get_category=None):
+    if get_category is not None:
+        categories = [(get_category, "")]
+    else:
+        categories = [
+            (lambda run1: run1["domain"], "-domain"),
+            (lambda run1: run1["algorithm"], "-alg"),
+        ]
     if scale != "log" and scale != "linear" and scale != "both":
         raise ValueError(f"scale must be 'log', 'linear' or 'both' got: '{scale}'")
+    for cat in categories:
+        if scale == "linear" or scale == "both":
+            exp.add_report(
+                reports.ScatterPlotReport(
+                    category_x,
+                    category_y,
+                    format="tex" if project.TEX else "png",
+                    show_missing=False,
+                    scale="linear",
+                    get_category=cat[0],
+                ),
+                name=f"{exp.name}-{category_x}-vs-{category_y}{cat[1]}-linear"
+            )
+        if scale == "log" or scale == "both":
+            exp.add_report(
+                reports.ScatterPlotReport(
+                    category_x,
+                    category_y,
+                    format="tex" if project.TEX else "png",
+                    show_missing=False,
+                    get_category=cat[0],
+                ),
+                name=f"{exp.name}-{category_x}-vs-{category_y}{cat[1]}"
+            )
 
 
 # TODO: make linear plot where it makes sense
 add_generic_scatter("layer_size", "total_time")
-add_generic_scatter("layer_size_literals", "total_time")
-add_generic_scatter("layer_size_seeded", "total_time")
 add_generic_scatter("layer_size_literals", "clause_propagation_time")
-add_generic_scatter("layer_size_literals", "path_construction_time")
 add_generic_scatter("layer_size_literals", "extend_time")
-add_generic_scatter("pattern_size", "total_time")
+add_generic_scatter("layer_size_literals", "path_construction_time")
+add_generic_scatter("layer_size_literals", "total_time")
+add_generic_scatter("layer_size_seeded", "obligation_insertions")
+add_generic_scatter("layer_size_seeded", "total_time")
+add_generic_scatter("obligation_expansions", "total_time")
 add_generic_scatter("pattern_size", "layer_seed_time", "linear")
+add_generic_scatter("pattern_size", "layer_size_seeded")
 add_generic_scatter("pattern_size", "obligation_expansions")
 add_generic_scatter("pattern_size", "obligation_insertions")
-add_generic_scatter("pattern_size", "layer_size_seeded")
-add_generic_scatter("layer_size_seeded", "obligation_insertions")
-add_generic_scatter("obligation_expansions", "total_time")
-
-
-
+add_generic_scatter("pattern_size", "total_time")
+add_generic_scatter("pdr_projected_states", "total_time")
+add_generic_scatter("pdr_projected_states", "obligation_expansions")
+add_generic_scatter("pdr_projected_states", "obligation_insertions")
+add_generic_scatter("pdr_projected_states", "layer_size_literals")
 
 exp.run_steps()
