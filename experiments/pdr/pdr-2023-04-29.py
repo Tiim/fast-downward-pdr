@@ -48,6 +48,11 @@ REVS = [
     # ("a50720128335f5416b6da6f182a79d91ae63b895", "unoptimized"),
 ]
 
+MATPLOTLIB_OPTIONS = {
+    "figure.figsize": [2, 2],
+    "savefig.dpi": 400,
+}
+
 ATTRIBUTES = [
     "error",
     "total_time",
@@ -97,9 +102,9 @@ project.add_download_step(exp)
 # Attributes for algorithm comparisons
 attributes = [
     "total_time",
-    "obligation_insertions",
-    "obligation_expansions",
-    "path_construction_time",
+    # "obligation_insertions",
+    # "obligation_expansions",
+    # "path_construction_time",
     "pattern_size",
     "layer_size_literals",
     "memory",
@@ -117,6 +122,9 @@ pairs += pairs_latest
 suffix = "-rel" if project.RELATIVE else ""
 for algo1, algo2 in pairs:
     for attr in attributes:
+        # latest:01-pdr-noop
+        algo1_name = algo1.split(":")[1][7:]
+        algo2_name = algo2.split(":")[1][7:]
         exp.add_report(
             project.ScatterPlotReport(
                 relative=project.RELATIVE,
@@ -125,8 +133,9 @@ for algo1, algo2 in pairs:
                 filter_algorithm=[algo1, algo2],
                 filter=[project.add_evaluations_per_time],
                 format="tex" if project.TEX else "png",
+                matplotlib_options=MATPLOTLIB_OPTIONS
             ),
-            name=f"{exp.name}-{algo1}-vs-{algo2}-{attr}{suffix}",
+            name=f"{algo1_name}-vs-{algo2_name}-{attr}{suffix}",
         )
 
 
@@ -150,8 +159,9 @@ def add_generic_scatter(category_x, category_y, scale="both", get_category=None)
                     show_missing=False,
                     scale="linear",
                     get_category=cat[0],
+                    matplotlib_options=MATPLOTLIB_OPTIONS
                 ),
-                name=f"{exp.name}-{category_x}-vs-{category_y}{cat[1]}-linear"
+                name=f"{category_x}-vs-{category_y}{cat[1]}-linear"
             )
         if scale == "log" or scale == "both":
             exp.add_report(
@@ -161,8 +171,10 @@ def add_generic_scatter(category_x, category_y, scale="both", get_category=None)
                     format="tex" if project.TEX else "png",
                     show_missing=False,
                     get_category=cat[0],
+                    matplotlib_options=MATPLOTLIB_OPTIONS
                 ),
                 name=f"{exp.name}-{category_x}-vs-{category_y}{cat[1]}"
+                name=f"{category_x}-vs-{category_y}{cat[1]}"
             )
 
 

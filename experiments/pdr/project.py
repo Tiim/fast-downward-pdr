@@ -48,7 +48,7 @@ def parse_args():
 
 ARGS = parse_args()
 TEX = ARGS.tex
-RELATIVE = ARGS.relative
+RELATIVE = True  # ARGS.relative
 
 EVALUATIONS_PER_TIME = Attribute(
     "evaluations_per_time", min_wins=False, function=geometric_mean, digits=1
