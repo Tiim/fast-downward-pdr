@@ -291,3 +291,48 @@ class LatexTable(TxtReport):
             string += "\\\\ \n"
 
         return string
+
+
+class TikZBarChart(TxtReport):
+    def __init__():
+        string = """
+        \\documentclass[tikz]{standalone}
+\\usepackage{pgfplots}
+\\begin{document}
+\\begin{tikzpicture}
+\\begin{axis}[
+        ybar,
+        bar width=14pt,
+        xtick distance=1,
+        xlabel=x values,
+        ylabel=y values,
+        enlarge x limits={abs=0.5},
+        ymin=0,
+        scaled ticks=false,
+        xtick style={
+            /pgfplots/major tick length=0pt,
+        },
+    ]
+
+        \\addplot+ [
+            error bars/.cd,
+                y dir=both,
+                y explicit relative,
+        ] coordinates {
+            (1,4342.7395) +- (0,0.05)
+            (2,7381.3423) +- (0,0.05)
+            (3,6837.375) +- (0,0.05)
+            (4,9964.5747) +- (0,0.05)
+            (5,7624.083) +- (0,0.05)
+            (6,7843.0192) +- (0,0.05)
+            (7,9665.1374) +- (0,0.05)
+            (8,7266.0779) +- (0,0.05)
+            (9,9393.7355) +- (0,0.05)
+        };
+        \\legend{
+            y values,
+        }
+    \\end{axis}
+\\end{tikzpicture}
+\\end{document}
+"""
