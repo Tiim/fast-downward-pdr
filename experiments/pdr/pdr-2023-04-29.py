@@ -176,7 +176,6 @@ def add_generic_scatter(category_x, category_y, scale="both", get_category=None)
                     get_category=cat[0],
                     matplotlib_options=MATPLOTLIB_OPTIONS
                 ),
-                name=f"{exp.name}-{category_x}-vs-{category_y}{cat[1]}"
                 name=f"{category_x}-vs-{category_y}{cat[1]}"
             )
 
