@@ -4,10 +4,13 @@ import logging
 import math
 import os
 
+from lab.reports import Report
 from downward.reports import PlanningReport
 from downward.reports.scatter_matplotlib import ScatterMatplotlib
 from downward.reports.scatter_pgfplots import ScatterPgfplots
 from lab import tools
+
+
 
 
 class ScatterPlotReport(PlanningReport):
@@ -217,3 +220,74 @@ class ScatterPlotReport(PlanningReport):
             self.outfile += suffix
         tools.makedirs(os.path.dirname(self.outfile))
         self._write_plot(self.runs.values(), self.outfile)
+
+
+class TxtReport(Report):
+    def __init__(self, **kwargs):
+        Report.__init__(self, **kwargs)
+
+    def get_txt(self):
+        raise Exception('Implement me')
+
+    def write(self):
+        with open(self.outfile, "w+") as f:
+            f.write(self.get_txt())
+
+
+def add(x, y):
+    return x + y
+
+
+def ID(x):
+    return x
+
+
+class LatexTable(TxtReport):
+    def __init__(self, x_attrs=["total_time"], y_attr="algorithm",
+                 x_aggrs=[add], x_initial=[0],
+                 show_header=True,
+                 y_formatter=ID, **kwargs):
+        TxtReport.__init__(self, format="tex", **kwargs)
+
+        assert len(x_attrs) == len(x_aggrs)
+        assert len(x_attrs) == len(x_initial)
+        self.x_attrs = x_attrs
+        self.y_attr = y_attr
+        self.x_aggrs = x_aggrs
+        self.x_initial = x_initial
+        self.show_header = show_header
+        self.y_formatter = y_formatter
+        pass
+
+    def get_data(self):
+        data = {}
+        for i, (x_attr, x_aggr, x_initial) in enumerate(zip(self.x_attrs, self.x_aggrs, self.x_initial)):
+            for _, run in self.props.items():
+                if self.y_attr not in run:
+                    continue
+                if x_attr not in run:
+                    x = None
+                else:
+                    x = run[x_attr]
+                y = run[self.y_attr]
+                if y not in data:
+                    data[y] = {}
+                if x_attr not in data[y]:
+                    data[y][x_attr] = x_initial
+                data[y][x_attr] = x_aggr(data[y][x_attr], x)
+        return data
+
+    def get_txt(self):
+        data = self.get_data()
+        print(data)
+        string = ""
+        
+        if self.show_header:
+            string += " & " + (" & ".join(self.x_attrs)) + " \\\\ \n\\hline \n"
+
+        for category, d in data.items():
+            string += f"{self.y_formatter(category)} & "
+            string += " & ".join([str(d[x]) for x in self.x_attrs])
+            string += "\\\\ \n"
+
+        return string

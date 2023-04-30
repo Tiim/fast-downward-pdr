@@ -113,12 +113,17 @@ pairs = [
 
 pairs += pairs_latest
 
+
+def algo_format(alg_name):
+    return alg_name.split(":")[1][7:]
+
+
 suffix = "-rel" if project.RELATIVE else ""
 for algo1, algo2 in pairs:
     for attr in attributes:
         # latest:01-pdr-noop
-        algo1_name = algo1.split(":")[1][7:]
-        algo2_name = algo2.split(":")[1][7:]
+        algo1_name = algo_format(algo1)
+        algo2_name = algo_format(algo2)
         exp.add_report(
             project.ScatterPlotReport(
                 relative=project.RELATIVE,
@@ -186,7 +191,17 @@ add_generic_scatter("pattern_size", "obligation_expansions")
 add_generic_scatter("pattern_size", "obligation_insertions")
 add_generic_scatter("pattern_size", "total_time")
 
-
+exp.add_report(reports.LatexTable(
+        x_attrs=["error", "total_time"],
+        x_aggrs=[
+            lambda prev, cur: prev if cur != "search-out-of-time" else prev + 1,
+            lambda prev, cur: prev + 1,
+        ],
+        x_initial=[0, 0],
+        show_header=False,
+        y_formatter=algo_format
+    ),
+    name="tbl_out-of-time")
 
 
 exp.run_steps()
