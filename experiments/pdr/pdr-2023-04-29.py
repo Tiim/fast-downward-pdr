@@ -17,7 +17,7 @@ if project.REMOTE:
     ENV = project.BaselSlurmEnvironment(email="tim.bachmann@stud.unibas.ch", partition="infai_2")
 else:
     SUITE = ["blocks:probBLOCKS-8-0.pddl"]  # project.SUITE_UNIT_COST[:1]
-    ENV = project.LocalEnvironment(processes=4)
+    ENV = project.LocalEnvironment(processes=1)
 
 # TODO: change these to pdr
 CONFIGS = [
@@ -111,8 +111,7 @@ attributes = [
     ("obligation_insertions", filter_zero("obligation_insertions")),
     ("obligation_expansions", filter_zero("obligation_expansions")),
     # "path_construction_time",
-    ("pattern_size", []),
-    ("layer_size_literals", []),
+    ("layer_size_literals_total", []),
     ("memory", []),
 ]
 pairs = [

@@ -17,7 +17,7 @@ if project.REMOTE:
     ENV = project.BaselSlurmEnvironment(email="tim.bachmann@stud.unibas.ch", partition="infai_2")
 else:
     SUITE = ["blocks:probBLOCKS-8-0.pddl"]  # project.SUITE_UNIT_COST[:1]
-    ENV = project.LocalEnvironment(processes=4)
+    ENV = project.LocalEnvironment(processes=1)
 
 # TODO: change these to pdr
 CONFIGS = [
