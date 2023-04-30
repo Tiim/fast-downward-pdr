@@ -14,7 +14,8 @@ REVISION_CACHE = os.environ.get("DOWNWARD_REVISION_CACHE")
 
 if project.REMOTE:
     SUITE = project.SUITE_UNIT_COST
-    ENV = project.BaselSlurmEnvironment(email="tim.bachmann@stud.unibas.ch", partition="infai_2")
+    ENV = project.BaselSlurmEnvironment(
+        email="tim.bachmann@stud.unibas.ch", partition="infai_2")
 else:
     SUITE = ["blocks:probBLOCKS-8-0.pddl"]  # project.SUITE_UNIT_COST[:1]
     ENV = project.LocalEnvironment(processes=1)
@@ -38,7 +39,8 @@ CONFIGS = [
 ]
 
 BUILD_OPTIONS = []
-DRIVER_OPTIONS = ["--overall-time-limit", "45m", "--overall-memory-limit", "6G"]
+DRIVER_OPTIONS = ["--overall-time-limit",
+                  "45m", "--overall-memory-limit", "6G"]
 
 # TODO: change these
 REVS = [
@@ -103,9 +105,20 @@ def filter_zero(prop):
 
 # Attributes for algorithm comparisons
 attributes = [
-    ("total_time", []),
-    ("obligation_insertions", filter_zero("obligation_insertions")),
-    ("obligation_expansions", filter_zero("obligation_expansions")),
+    ("total_time", [],
+     lambda run1, run2: None if "obligation_expansions" not in run1 or "obligation_expansions" not in run2 else "fewer ob" if run1[
+         "obligation_expansions"] > run2["obligation_expansions"] else "more ob"
+     ),
+    ("obligation_insertions",
+     filter_zero("obligation_insertions"),
+     lambda run1, run2: "" if "total_time" not in run1 or "total_time" not in run2 else "faster" if run1[
+         "total_time"] > run2["total_time"] else "slower"
+     ),
+    ("obligation_expansions",
+     filter_zero("obligation_expansions"),
+     lambda run1, run2: "" if "total_time" not in run1 or "total_time" not in run2 else "faster" if run1[
+         "total_time"] > run2["total_time"] else "slower"
+     ),
     # "path_construction_time",
 ]
 pairs = [
@@ -113,5 +126,6 @@ pairs = [
 ]
 
 
-project.add_reports(exp=exp, pairs=pairs, attributes=attributes, CONFIGS=CONFIGS)
+project.add_reports(exp=exp, pairs=pairs,
+                    attributes=attributes, CONFIGS=CONFIGS)
 exp.run_steps()

@@ -2,6 +2,7 @@ from collections import defaultdict
 import itertools
 import logging
 import math
+import statistics
 import os
 
 from lab.reports import Report
@@ -9,8 +10,6 @@ from downward.reports import PlanningReport
 from downward.reports.scatter_matplotlib import ScatterMatplotlib
 from downward.reports.scatter_pgfplots import ScatterPgfplots
 from lab import tools
-
-
 
 
 class ScatterPlotReport(PlanningReport):
@@ -246,7 +245,8 @@ class LatexTable(TxtReport):
     def __init__(self, x_attrs=["total_time"], y_attr="algorithm",
                  x_aggrs=[add], x_initial=[0],
                  show_header=True,
-                 y_formatter=ID, **kwargs):
+                 y_formatter=ID,
+                 **kwargs):
         TxtReport.__init__(self, format="tex", **kwargs)
 
         assert len(x_attrs) == len(x_aggrs)
@@ -281,7 +281,7 @@ class LatexTable(TxtReport):
         data = self.get_data()
         print(data)
         string = ""
-        
+
         if self.show_header:
             string += " & " + (" & ".join(self.x_attrs)) + " \\\\ \n\\hline \n"
 
@@ -294,45 +294,108 @@ class LatexTable(TxtReport):
 
 
 class TikZBarChart(TxtReport):
-    def __init__():
-        string = """
-        \\documentclass[tikz]{standalone}
-\\usepackage{pgfplots}
-\\begin{document}
-\\begin{tikzpicture}
-\\begin{axis}[
-        ybar,
-        bar width=14pt,
-        xtick distance=1,
-        xlabel=x values,
-        ylabel=y values,
-        enlarge x limits={abs=0.5},
-        ymin=0,
-        scaled ticks=false,
-        xtick style={
-            /pgfplots/major tick length=0pt,
-        },
-    ]
+    def __init__(self, x_attrs=["total_time"], y_attr="algorithm",
+                 x_aggrs=[add], x_initial=[0],
+                 show_header=True,
+                 x_label="",
+                 y_label="",
+                 y_formatter=ID, **kwargs):
+        TxtReport.__init__(self, format="tex", **kwargs)
 
-        \\addplot+ [
-            error bars/.cd,
-                y dir=both,
-                y explicit relative,
-        ] coordinates {
-            (1,4342.7395) +- (0,0.05)
-            (2,7381.3423) +- (0,0.05)
-            (3,6837.375) +- (0,0.05)
-            (4,9964.5747) +- (0,0.05)
-            (5,7624.083) +- (0,0.05)
-            (6,7843.0192) +- (0,0.05)
-            (7,9665.1374) +- (0,0.05)
-            (8,7266.0779) +- (0,0.05)
-            (9,9393.7355) +- (0,0.05)
-        };
-        \\legend{
-            y values,
-        }
-    \\end{axis}
-\\end{tikzpicture}
-\\end{document}
-"""
+        assert len(x_attrs) == len(x_aggrs)
+        assert len(x_attrs) == len(x_initial)
+        self.x_attrs = x_attrs
+        self.y_attr = y_attr
+        self.x_aggrs = x_aggrs
+        self.x_initial = x_initial
+        self.show_header = show_header
+        self.y_formatter = y_formatter
+        self.x_label = x_label
+        self.y_label = y_label
+        pass
+
+    def escape_str(self, s):
+        return s.replace("_", " ").replace("{", " ").replace("}", " ")
+
+    def get_data(self):
+        data = {}
+        for i, (x_attr, x_aggr, x_initial) in enumerate(zip(self.x_attrs, self.x_aggrs, self.x_initial)):
+            for _, run in self.props.items():
+                if self.y_attr not in run:
+                    continue
+                if x_attr not in run:
+                    x = None
+                else:
+                    x = run[x_attr]
+                y = run[self.y_attr]
+                if y not in data:
+                    data[y] = {}
+                if x_attr not in data[y]:
+                    data[y][x_attr] = []
+                data[y][x_attr].append(x)
+        return data
+
+    def get_txt(self):
+        data = self.get_data()
+
+        return ("""
+        \\documentclass[tikz]{standalone}
+        \\usepackage{pgfplots}
+        \\begin{document}
+        \\begin{tikzpicture}
+        \\begin{axis}[
+                ybar,
+                bar width=14pt,
+                xtick distance=1,
+                xlabel={""" + self.x_label + """},
+                ylabel={""" + self.y_label + """},
+                ymin=0,
+                nodes near coords,
+                symbolic x coords={"""+self.get_coord_names(data)+"""},
+                scaled ticks=false,
+                xtick style={
+                    /pgfplots/major tick length=0pt,
+                },
+                x tick label style={rotate=90,anchor=east}
+            ]
+                """ +
+                self.get_plots(data) +
+                self.get_legend() +
+                """
+            \\end{axis}
+        \\end{tikzpicture}
+        \\end{document}
+        """)
+
+    def get_coord_names(self, data):
+        return ",".join([self.y_formatter(category) for category, _ in data.items()])
+
+    def get_legend(self):
+        if len(self.x_attrs) < 2:
+            return ""
+        entries = ",\n".join(map(self.escape_str, self.x_attrs))
+        return "\\legend{\n" + entries + "\n }"
+
+    def get_plots(self, data):
+        plots = []
+        for x_attr in self.x_attrs:
+            plots.append("""
+                         \\addplot+ [
+                            error bars/.cd,
+                                y dir=both,
+                                y explicit relative,
+                         ] coordinates {
+                         """
+                         + self.get_coords(data, x_attr) +
+                         """
+                        };
+                """)
+        return "\n".join(plots)
+
+    def get_coords(self, data, x_attr):
+        coords = []
+        for category, d in data.items():
+            coords.append(
+                f"({self.y_formatter(category)},{statistics.mean(d[x_attr])}) +- (0,0)")
+        return "\n".join(coords)
+        # (1,4342.7395) +- (0,0.05)

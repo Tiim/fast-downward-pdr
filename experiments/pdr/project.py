@@ -55,9 +55,9 @@ EVALUATIONS_PER_TIME = Attribute(
     "evaluations_per_time", min_wins=False, function=geometric_mean, digits=1
 )
 MATPLOTLIB_OPTIONS = {
-    "figure.figsize": [4, 4],
-    "savefig.dpi": 400,
-}
+    "figure.figsize": [3, 3],
+    "savefig.dpi": 200,
+} if TEX else None
 
 # fmt: off
 
@@ -109,7 +109,6 @@ def _get_eval_dir():
     script = Path(tools.get_script_path())
     expname = script.stem + "-eval"
     return Path("data") / expname
-
 
 
 def add_absolute_report(exp, *, name=None, outfile=None, **kwargs):
@@ -166,11 +165,13 @@ def read_properties():
 
 class CustomFastDownwardExperiment (FastDownwardExperiment):
     def __init__(self, path=None, environment=None, revision_cache=None):
-        FastDownwardExperiment.__init__(self, path=path, environment=environment, revision_cache=revision_cache)
+        FastDownwardExperiment.__init__(
+            self, path=path, environment=environment, revision_cache=revision_cache)
         self.report_steps = []
 
     def add_report(self, report, name="", eval_dir="", outfile=""):
-        FastDownwardExperiment.add_report(self, report, name=name, eval_dir=eval_dir, outfile=outfile)
+        FastDownwardExperiment.add_report(
+            self, report, name=name, eval_dir=eval_dir, outfile=outfile)
         last_step = self.steps.pop()
         self.report_steps.append(last_step)
 
@@ -191,7 +192,8 @@ def add_generic_scatter(exp, category_x, category_y, scale="both", get_category=
             (lambda run1: run1["algorithm"], "-alg"),
         ]
     if scale != "log" and scale != "linear" and scale != "both":
-        raise ValueError(f"scale must be 'log', 'linear' or 'both' got: '{scale}'")
+        raise ValueError(
+            f"scale must be 'log', 'linear' or 'both' got: '{scale}'")
     for cat in categories:
         if scale == "linear" or scale == "both":
             exp.add_report(
@@ -227,30 +229,39 @@ def algo_format(alg_name):
 def add_reports(exp, pairs, attributes, CONFIGS):
 
     exp.add_report(reports.LatexTable(
-            x_attrs=[
-                "error",
-                # "total_time"
-            ],
-            x_aggrs=[
-                lambda prev, cur: prev if cur != "search-out-of-time" else prev + 1,
-                # lambda prev, cur: prev + 1,
-            ],
-            # x_initial=[0, 0],
-            show_header=False,
-            y_formatter=algo_format
-        ),
+        x_attrs=[
+            "error",
+            # "total_time"
+        ],
+        x_aggrs=[
+            lambda prev, cur: prev if cur != "search-out-of-time" else prev + 1,
+            # lambda prev, cur: prev + 1,
+        ],
+        # x_initial=[0, 0],
+        show_header=False,
+        y_formatter=algo_format
+    ),
         name="tbl_out-of-time")
+    exp.add_report(reports.TikZBarChart(
+        x_attrs=[
+            "layer_size_seeded_total",
+        ],
+        y_formatter=algo_format,
+        y_label="Average Seeded Clauses"
+    ),
+        name="bar_chart-layer_size_seeded_total")
 
     suffix = "-rel" if RELATIVE else ""
     for algo1, algo2 in pairs:
-        for attr, filters in attributes:
+        for attr, filters, category in attributes:
             # latest:01-pdr-noop
             algo1_name = algo_format(algo1)
             algo2_name = algo_format(algo2)
             exp.add_report(
                 ScatterPlotReport(
                     relative=RELATIVE,
-                    get_category=None if TEX else lambda run1, run2: run1["domain"],
+                    # None if TEX else lambda run1, run2: run1["domain"],
+                    get_category=category,
                     attributes=[attr],
                     filter_algorithm=[algo1, algo2],
                     filter=filters,
@@ -261,19 +272,20 @@ def add_reports(exp, pairs, attributes, CONFIGS):
                 name=f"{algo1_name}-vs-{algo2_name}-{attr}{suffix}",
             )
 
-    add_generic_scatter(exp, "layer_size", "total_time")
-    add_generic_scatter(exp, "layer_size_literals", "clause_propagation_time")
-    add_generic_scatter(exp, "layer_size_literals", "extend_time")
-    add_generic_scatter(exp, "layer_size_literals", "path_construction_time")
-    add_generic_scatter(exp, "layer_size_literals", "total_time")
-    add_generic_scatter(exp, "layer_size_seeded", "obligation_insertions")
-    add_generic_scatter(exp, "layer_size_seeded", "total_time")
-    add_generic_scatter(exp, "obligation_expansions", "total_time")
-    add_generic_scatter(exp, "pattern_size", "layer_seed_time", "linear")
-    add_generic_scatter(exp, "pattern_size", "layer_size_seeded")
-    add_generic_scatter(exp, "pattern_size", "obligation_expansions")
-    add_generic_scatter(exp, "pattern_size", "obligation_insertions")
-    add_generic_scatter(exp, "pattern_size", "total_time")
+    add_generic_scatter(exp, "layer_size", "total_time", scale="log")
+    # add_generic_scatter(exp, "layer_size_literals", "clause_propagation_time")
+    # add_generic_scatter(exp, "layer_size_literals", "extend_time")
+    # add_generic_scatter(exp, "layer_size_literals", "path_construction_time")
+    add_generic_scatter(exp, "layer_size_literals", "total_time", scale="log")
+    # add_generic_scatter(exp, "layer_size_seeded", "obligation_insertions")
+    # add_generic_scatter(exp, "layer_size_seeded", "total_time")
+    # add_generic_scatter(exp, "obligation_expansions", "total_time")
+    # add_generic_scatter(exp, "pattern_size", "layer_seed_time", "linear")
+    # add_generic_scatter(exp, "pattern_size", "layer_size_seeded")
+    # add_generic_scatter(exp, "pattern_size", "obligation_expansions")
+    # add_generic_scatter(exp, "pattern_size", "obligation_insertions")
+    # add_generic_scatter(exp, "pattern_size", "total_time")
+
     # add_generic_scatter(exp, "pdr_projected_states", "total_time")
     # add_generic_scatter(exp, "pdr_projected_states", "obligation_expansions")
     # add_generic_scatter(exp, "pdr_projected_states", "obligation_insertions")
