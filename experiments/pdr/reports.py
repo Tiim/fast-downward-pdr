@@ -399,3 +399,12 @@ class TikZBarChart(TxtReport):
                 f"({self.y_formatter(category)},{statistics.mean(d[x_attr])}) +- (0,0)")
         return "\n".join(coords)
         # (1,4342.7395) +- (0,0.05)
+
+
+class LambdaTexReport(TxtReport):
+    def __init__(self, lmda=lambda data: "noop", **kwargs):
+        TxtReport.__init__(self, format="tex",  **kwargs)
+        self.lmda = lmda
+
+    def get_txt(self):
+        return self.lmda(self.props)
