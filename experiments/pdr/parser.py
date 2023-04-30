@@ -99,7 +99,7 @@ def main():
     parser.add_pattern(
         "pdb_projected_states",
         r"Projected states: (.*)\n",
-        required=True,
+        required=False,
         type=int,
     )
     parser.parse()
