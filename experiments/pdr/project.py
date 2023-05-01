@@ -183,7 +183,7 @@ class CustomFastDownwardExperiment (FastDownwardExperiment):
         env.run_steps(self.report_steps)
 
 
-def add_generic_scatter(exp, category_x, category_y, scale="both", get_category=None):
+def add_generic_scatter(exp, category_x, category_y, scale="both", get_category=None, filter=[]):
     if get_category is not None:
         categories = [(get_category, "")]
     else:
@@ -202,6 +202,7 @@ def add_generic_scatter(exp, category_x, category_y, scale="both", get_category=
                     category_y,
                     format="tex" if TEX else "png",
                     show_missing=False,
+                    filter=filter,
                     scale="linear",
                     get_category=cat[0],
                     matplotlib_options=MATPLOTLIB_OPTIONS
@@ -215,6 +216,7 @@ def add_generic_scatter(exp, category_x, category_y, scale="both", get_category=
                     category_y,
                     format="tex" if TEX else "png",
                     show_missing=False,
+                    filter=filter,
                     get_category=cat[0],
                     matplotlib_options=MATPLOTLIB_OPTIONS
                 ),
@@ -231,6 +233,15 @@ def filter_zero(prop):
         if prop in run and run[prop] <= 0:
             run[prop] = None
         return True
+    return f
+
+
+def filter_exclude_algs(algs):
+    if isinstance(algs, str):
+        algs = [algs]
+
+    def f(run):
+        return not (algo_format(run["algorithm"]) in algs)
     return f
 
 
@@ -255,6 +266,7 @@ def categorize_by_comparison(prop):
 
 def add_reports(exp, pairs,  CONFIGS):
 
+    excluded_algs = ["greedy-5000", "rand-5000"]
     exp.add_report(reports.LatexTable(
         x_attrs=[
             "error",
@@ -264,6 +276,7 @@ def add_reports(exp, pairs,  CONFIGS):
             lambda prev, cur: prev if cur != "search-out-of-time" else prev + 1,
             # lambda prev, cur: prev + 1,
         ],
+        filter=[filter_exclude_algs(excluded_algs)],
         # x_initial=[0, 0],
         show_header=False,
         y_formatter=algo_format
@@ -274,6 +287,7 @@ def add_reports(exp, pairs,  CONFIGS):
         x_attrs=[
             "layer_size_seeded_total",
         ],
+        filter=[filter_exclude_algs(["noop"] + excluded_algs)],
         y_formatter=algo_format,
         y_label="Average Seeded Clauses"
     ),
@@ -289,14 +303,18 @@ def add_reports(exp, pairs,  CONFIGS):
         },
         {
             "attribute": "obligation_insertions",
-            "filter": filter_zero("obligation_insertions"),
+            "filter": [
+                filter_zero("obligation_insertions")
+            ],
             "category": categorize_by_comparison("total_time"),
             "show_missing": False,
             "relative": True,
         },
         {
             "attribute": "obligation_expansions",
-            "filter": filter_zero("obligation_expansions"),
+            "filter": [
+                filter_zero("obligation_expansions")
+            ],
             "category": categorize_by_comparison("total_time"),
             "show_missing": False,
             "relative": True,
@@ -317,6 +335,9 @@ def add_reports(exp, pairs,  CONFIGS):
         algo1_name = algo_format(algo1)
         algo2_name = algo_format(algo2)
 
+        if algo1_name in excluded_algs or algo2_name in excluded_algs:
+            continue
+
         for a in attributes:
             # latest:01-pdr-noop
             attribute = a["attribute"]
@@ -335,11 +356,13 @@ def add_reports(exp, pairs,  CONFIGS):
                 name=f"{algo1_name}-vs-{algo2_name}-{attribute}",
             )
 
-    add_generic_scatter(exp, "layer_size", "total_time", scale="log")
+    add_generic_scatter(exp, "layer_size", "total_time",
+                        scale="log", filter=filter_exclude_algs(excluded_algs))
     # add_generic_scatter(exp, "layer_size_literals", "clause_propagation_time")
     # add_generic_scatter(exp, "layer_size_literals", "extend_time")
     # add_generic_scatter(exp, "layer_size_literals", "path_construction_time")
-    add_generic_scatter(exp, "layer_size_literals", "total_time", scale="log")
+    add_generic_scatter(exp, "layer_size_literals", "total_time",
+                        scale="log", filter=filter_exclude_algs(excluded_algs))
     # add_generic_scatter(exp, "layer_size_seeded", "obligation_insertions")
     # add_generic_scatter(exp, "layer_size_seeded", "total_time")
     # add_generic_scatter(exp, "obligation_expansions", "total_time")
