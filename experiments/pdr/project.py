@@ -226,7 +226,34 @@ def algo_format(alg_name):
     return alg_name.split(":")[1][7:]
 
 
-def add_reports(exp, pairs, attributes, CONFIGS):
+def filter_zero(prop):
+    def f(run):
+        if prop in run and run[prop] <= 0:
+            run[prop] = None
+        return True
+    return f
+
+
+def add_first_layer_filter(run):
+    run["layer_size_first"] = (
+        run["layer_size"][0] if "layer_size" in run and len(
+            run["layer_size"]) > 0 else 0
+    )
+    return True
+
+
+def categorize_by_comparison(prop):
+    def category(run1, run2):
+        if prop not in run1 or prop not in run2:
+            return "zzz"
+        elif run1[prop] > run2[prop]:
+            return "less"
+        else:
+            return "more"
+    return category
+
+
+def add_reports(exp, pairs,  CONFIGS):
 
     exp.add_report(reports.LatexTable(
         x_attrs=[
@@ -242,6 +269,7 @@ def add_reports(exp, pairs, attributes, CONFIGS):
         y_formatter=algo_format
     ),
         name="tbl_out-of-time")
+
     exp.add_report(reports.TikZBarChart(
         x_attrs=[
             "layer_size_seeded_total",
@@ -251,25 +279,60 @@ def add_reports(exp, pairs, attributes, CONFIGS):
     ),
         name="bar_chart-layer_size_seeded_total")
 
-    suffix = "-rel" if RELATIVE else ""
+    attributes = [
+        {
+            "attribute": "total_time",
+            "filter": [],
+            "category": categorize_by_comparison("obligation_expansions"),
+            "show_missing": True,
+            "relative": True,
+        },
+        {
+            "attribute": "obligation_insertions",
+            "filter": filter_zero("obligation_insertions"),
+            "category": categorize_by_comparison("total_time"),
+            "show_missing": False,
+            "relative": True,
+        },
+        {
+            "attribute": "obligation_expansions",
+            "filter": filter_zero("obligation_expansions"),
+            "category": categorize_by_comparison("total_time"),
+            "show_missing": False,
+            "relative": True,
+        },
+        {
+            "attribute": "layer_size_first",
+            "filter": [
+                add_first_layer_filter,
+                filter_zero("layer_size_first")
+            ],
+            "category": categorize_by_comparison("total_time"),
+            "show_missing": False,
+            "relative": True,
+        }
+        # "path_construction_time",
+    ]
     for algo1, algo2 in pairs:
-        for attr, filters, category in attributes:
+        algo1_name = algo_format(algo1)
+        algo2_name = algo_format(algo2)
+
+        for a in attributes:
             # latest:01-pdr-noop
-            algo1_name = algo_format(algo1)
-            algo2_name = algo_format(algo2)
+            attribute = a["attribute"]
             exp.add_report(
                 ScatterPlotReport(
-                    relative=RELATIVE,
+                    relative=a["relative"],
                     # None if TEX else lambda run1, run2: run1["domain"],
-                    get_category=category,
-                    attributes=[attr],
+                    get_category=a["category"],
+                    attributes=[attribute],
                     filter_algorithm=[algo1, algo2],
-                    filter=filters,
+                    filter=a["filter"],
                     format="tex" if TEX else "png",
-                    show_missing=False,
+                    show_missing=a["show_missing"],
                     matplotlib_options=MATPLOTLIB_OPTIONS
                 ),
-                name=f"{algo1_name}-vs-{algo2_name}-{attr}{suffix}",
+                name=f"{algo1_name}-vs-{algo2_name}-{attribute}",
             )
 
     add_generic_scatter(exp, "layer_size", "total_time", scale="log")

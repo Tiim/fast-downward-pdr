@@ -99,40 +99,12 @@ project.add_publish_step(exp)
 project.add_download_step(exp)
 
 
-def filter_zero(prop):
-    def f(run):
-        if prop in run and run[prop] <= 0:
-            run[prop] = None
-        return True
-    return f
-
-
 # Attributes for algorithm comparisons
-attributes = [
-    ("total_time", [],
-     lambda run1, run2: None if "obligation_expansions" not in run1 or "obligation_expansions" not in run2 else "fewer ob" if run1[
-         "obligation_expansions"] > run2["obligation_expansions"] else "more ob"
-     ),
-    ("obligation_insertions",
-     filter_zero("obligation_insertions"),
-     lambda run1, run2: "" if "total_time" not in run1 or "total_time" not in run2 else "faster" if run1[
-         "total_time"] > run2["total_time"] else "slower"
-     ),
-    ("obligation_expansions",
-     filter_zero("obligation_expansions"),
-     lambda run1, run2: "" if "total_time" not in run1 or "total_time" not in run2 else "faster" if run1[
-         "total_time"] > run2["total_time"] else "slower"
-     ),
-    # "path_construction_time",
-    ("layer_size_literals_total", [], None),
-    ("memory", [], None),
-]
 pairs = [
     ("latest:01-pdr-noop", f"latest:{alg[0]}") for alg in CONFIGS[1:]
 ]
 
 
 project.add_reports(exp=exp, pairs=pairs,
-                    attributes=attributes, CONFIGS=CONFIGS)
-
+                    CONFIGS=CONFIGS)
 exp.run_steps()
