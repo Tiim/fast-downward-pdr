@@ -59,6 +59,8 @@ MATPLOTLIB_OPTIONS = {
     "savefig.dpi": 200,
 } if TEX else None
 
+REPLACE = [("legend pos={outer north east}", "legend pos={south west}")]
+
 # fmt: off
 
 SUITE_UNIT_COST = ["airport", "barman-opt14-strips", "blocks", "childsnack-opt14-strips", "depot", "driverlog", "freecell", "grid", "gripper", "hiking-opt14-strips", "logistics00", "logistics98", "miconic", "movie", "mprime", "mystery", "nomystery-opt11-strips", "openstacks-strips", "organic-synthesis-opt18-strips", "parking-opt11-strips", "parking-opt14-strips", "pathways", "pipesworld-notankage", "pipesworld-tankage", "psr-small", "rovers", "satellite", "snake-opt18-strips", "storage", "termes-opt18-strips", "tidybot-opt11-strips", "tidybot-opt14-strips", "tpp", "trucks-strips", "visitall-opt11-strips", "visitall-opt14-strips", "zenotravel"]
@@ -197,7 +199,7 @@ def add_generic_scatter(exp, category_x, category_y, scale="both", get_category=
     for cat in categories:
         if scale == "linear" or scale == "both":
             exp.add_report(
-                reports.ScatterPlotReport(
+                reports.ReportWrapperReplacer(reports.ScatterPlotReport(
                     category_x,
                     category_y,
                     format="tex" if TEX else "png",
@@ -207,11 +209,12 @@ def add_generic_scatter(exp, category_x, category_y, scale="both", get_category=
                     get_category=cat[0],
                     matplotlib_options=MATPLOTLIB_OPTIONS
                 ),
+                    replace=REPLACE),
                 name=f"{category_x}-vs-{category_y}{cat[1]}-linear"
             )
         if scale == "log" or scale == "both":
             exp.add_report(
-                reports.ScatterPlotReport(
+                reports.ReportWrapperReplacer(reports.ScatterPlotReport(
                     category_x,
                     category_y,
                     format="tex" if TEX else "png",
@@ -220,6 +223,7 @@ def add_generic_scatter(exp, category_x, category_y, scale="both", get_category=
                     get_category=cat[0],
                     matplotlib_options=MATPLOTLIB_OPTIONS
                 ),
+                    replace=REPLACE),
                 name=f"{category_x}-vs-{category_y}{cat[1]}"
             )
 
@@ -253,31 +257,42 @@ def add_first_layer_filter(run):
     return True
 
 
-def categorize_by_comparison(prop):
+def categorize_by_comparison(prop, less="less", more="more", missing="missing"):
     def category(run1, run2):
         if prop not in run1 or prop not in run2:
-            return "zzz"
+            return "\\vphantom{3}"+missing
         elif run1[prop] > run2[prop]:
-            return "less"
+            return "\\vphantom{1}"+less
         else:
-            return "more"
+            return "\\vphantom{2}"+more
     return category
 
 
 def add_reports(exp, pairs,  CONFIGS):
 
     excluded_algs = ["greedy-5000", "rand-5000"]
+    exp.add_report(reports.LambdaTexReport(
+        lambda data: max([(run["pdb_projected_states"]
+                           if "pdb_projected_states" in run and "cegar" in run["algorithm"] else 0) for alg, run in data.items()])
+        # and "cegar" in run["algorithm"]
+    ),
+        name="cegar_max_projected_states")
     exp.add_report(reports.LatexTable(
         x_attrs=[
             "error",
-            # "total_time"
+            "error",
+            "error",
         ],
         x_aggrs=[
-            lambda prev, cur: prev if cur != "search-out-of-time" else prev + 1,
+            lambda prev, cur: prev +
+            1 if cur in ["success", "search-unsolvable-incomplete"] else prev,
+            lambda prev, cur: prev + 1 if cur == "search-out-of-time" else prev,
+            lambda prev, cur: prev + 1 if cur not in [
+                "success", "search-out-of-time", "search-unsolvable-incomplete"] else prev,
             # lambda prev, cur: prev + 1,
         ],
         filter=[filter_exclude_algs(excluded_algs)],
-        # x_initial=[0, 0],
+        x_initial=[0, 0, 0],
         show_header=False,
         y_formatter=algo_format
     ),
@@ -297,7 +312,9 @@ def add_reports(exp, pairs,  CONFIGS):
         {
             "attribute": "total_time",
             "filter": [],
-            "category": categorize_by_comparison("obligation_expansions"),
+            "category": categorize_by_comparison(
+                "obligation_expansions", more="more expansions",
+                less="fewer expansions", missing="at least one run failed"),
             "show_missing": True,
             "relative": True,
         },
@@ -306,7 +323,9 @@ def add_reports(exp, pairs,  CONFIGS):
             "filter": [
                 filter_zero("obligation_insertions")
             ],
-            "category": categorize_by_comparison("total_time"),
+            "category": categorize_by_comparison(
+                "total_time", more="slower", less="faster",
+                missing="at least one run failed"),
             "show_missing": False,
             "relative": True,
         },
@@ -315,7 +334,9 @@ def add_reports(exp, pairs,  CONFIGS):
             "filter": [
                 filter_zero("obligation_expansions")
             ],
-            "category": categorize_by_comparison("total_time"),
+            "category": categorize_by_comparison(
+                "total_time", more="slower", less="faster",
+                missing="at least one run failed"),
             "show_missing": False,
             "relative": True,
         },
@@ -325,10 +346,25 @@ def add_reports(exp, pairs,  CONFIGS):
                 add_first_layer_filter,
                 filter_zero("layer_size_first")
             ],
-            "category": categorize_by_comparison("total_time"),
+            "category": categorize_by_comparison(
+                "total_time", more="slower", less="faster",
+                missing="at least one run failed"),
             "show_missing": False,
             "relative": True,
-        }
+        },
+        {
+            "attribute": "layer_size_first",
+            "filter": [
+                add_first_layer_filter,
+                filter_zero("layer_size_first")
+            ],
+            "category": categorize_by_comparison(
+                "obligation_expansions", more="more expansions",
+                less="fewer expansions", missing="at least one run failed"),
+            "show_missing": False,
+            "relative": True,
+            "suffix": "obs"
+        },
         # "path_construction_time",
     ]
     for algo1, algo2 in pairs:
@@ -341,8 +377,9 @@ def add_reports(exp, pairs,  CONFIGS):
         for a in attributes:
             # latest:01-pdr-noop
             attribute = a["attribute"]
+            suffix = a["suffix"] if "suffix" in a else ""
             exp.add_report(
-                ScatterPlotReport(
+                reports.ReportWrapperReplacer(ScatterPlotReport(
                     relative=a["relative"],
                     # None if TEX else lambda run1, run2: run1["domain"],
                     get_category=a["category"],
@@ -352,8 +389,8 @@ def add_reports(exp, pairs,  CONFIGS):
                     format="tex" if TEX else "png",
                     show_missing=a["show_missing"],
                     matplotlib_options=MATPLOTLIB_OPTIONS
-                ),
-                name=f"{algo1_name}-vs-{algo2_name}-{attribute}",
+                ), replace=REPLACE),
+                name=f"{algo1_name}-vs-{algo2_name}-{attribute}{suffix}",
             )
 
     add_generic_scatter(exp, "layer_size", "total_time",

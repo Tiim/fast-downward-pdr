@@ -12,6 +12,31 @@ from downward.reports.scatter_pgfplots import ScatterPgfplots
 from lab import tools
 
 
+class ReportWrapperReplacer(Report):
+    def __init__(self, report, replace=[], **kwargs,):
+        self.report = report
+        self.replace = replace
+
+    def __call__(self, eval_dir, outfile):
+        ret = self.report(eval_dir, outfile)
+
+        if not outfile.endswith(".txt") and not outfile.endswith(".tex"):
+            return ret
+
+        with open(outfile, 'r') as f:
+            text = f.read()
+
+        for src, dest in self.replace:
+            new_text = text.replace(src, dest)
+
+        with open(outfile, 'w') as f:
+            f.write(new_text)
+        return ret
+
+    def __getattr__(self, attr):
+        return getattr(self.report, attr)
+
+
 class ScatterPlotReport(PlanningReport):
     """
     Generate a scatter plot for an attribute.
@@ -272,22 +297,22 @@ class LatexTable(TxtReport):
                 y = run[self.y_attr]
                 if y not in data:
                     data[y] = {}
-                if x_attr not in data[y]:
-                    data[y][x_attr] = x_initial
-                data[y][x_attr] = x_aggr(data[y][x_attr], x)
+                if i not in data[y]:
+                    data[y][i] = x_initial
+                data[y][i] = x_aggr(data[y][i], x)
         return data
 
     def get_txt(self):
         data = self.get_data()
-        print(data)
         string = ""
 
         if self.show_header:
             string += " & " + (" & ".join(self.x_attrs)) + " \\\\ \n\\hline \n"
 
         for category, d in data.items():
+            print(d)
             string += f"{self.y_formatter(category)} & "
-            string += " & ".join([str(d[x]) for x in self.x_attrs])
+            string += " & ".join([str(d[i]) for i in range(len(d))])
             string += "\\\\ \n"
 
         return string
@@ -407,4 +432,4 @@ class LambdaTexReport(TxtReport):
         self.lmda = lmda
 
     def get_txt(self):
-        return self.lmda(self.props)
+        return str(self.lmda(self.props))
