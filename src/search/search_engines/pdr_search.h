@@ -39,6 +39,7 @@ namespace pdr_search
         utils::Timer clause_propagation_time = utils::Timer(false);
         std::size_t obligation_expansions = 0;
         std::size_t obligation_insertions = 0;
+        std::vector<size_t> obligation_expansions_per_layer;
 
 
         int iteration = 0;

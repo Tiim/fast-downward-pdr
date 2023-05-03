@@ -331,6 +331,12 @@ namespace pdr_search
 
             std::cout << "Seed layer size " << i << ": " << this->seeded_layers_size[i]<<std::endl;
         }
+        std::cout << "Obligation expansions per layer: ";
+        for(size_t i = 0; i < this->obligation_expansions_per_layer.size(); ++i) {
+            std::cout << "l:"<<i<<"ex:"<<
+                this->obligation_expansions_per_layer[i]<<", ";
+        }
+        std::cout << std::endl;
         std::cout << "Total clause propagation time: " << this->clause_propagation_time << std::endl;
         std::cout << "Total extend time: " << this->extend_time << std::endl;
         std::cout << "Total path construction phase time: " << this->path_construction_time << std::endl;
@@ -371,7 +377,8 @@ namespace pdr_search
         }
 
         auto X = all_variables();
-
+        
+        size_t obligation_expansions_this_iteration = 0;
         // line 3
         const int k = iteration;
         iteration += 1;
@@ -401,6 +408,7 @@ namespace pdr_search
                 auto si = Q.top();
                 Q.pop();
                 this->obligation_expansions += 1;
+                obligation_expansions_this_iteration += 1;
                 //std::cout << "8: Pop obligation from queue: (s, i) = " << *si << std::endl;
                 if (si->get_parent()) {
                     //std::cout << "8: Parent = " << *(si->get_parent()) << std::endl;
@@ -416,6 +424,8 @@ namespace pdr_search
                     // std::cout << "Step: i" << s_i << std::endl;
                     // std::cout << "Plan: " << std::endl;
                     this->path_construction_time.stop();
+                    this->obligation_expansions_per_layer.insert(this->obligation_expansions_per_layer.end(), 
+                            obligation_expansions_this_iteration);
                     return SearchStatus::SOLVED;
                 }
 
@@ -534,6 +544,8 @@ namespace pdr_search
                 // line 30
                 // std::cout << "30: No plan possible" << std::endl;
                 this->clause_propagation_time.stop();
+                this->obligation_expansions_per_layer.insert(this->obligation_expansions_per_layer.end(), 
+                        obligation_expansions_this_iteration);
                 return SearchStatus::FAILED;
             }
             // std::cout << "clause propagation " << i <<std::endl;
@@ -543,6 +555,8 @@ namespace pdr_search
             }
         }
         this->clause_propagation_time.stop();
+        this->obligation_expansions_per_layer.insert(this->obligation_expansions_per_layer.end(), 
+                obligation_expansions_this_iteration);
 
         // if (enable_layer_simplification)
         // {
