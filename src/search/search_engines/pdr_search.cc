@@ -26,45 +26,31 @@ namespace pdr_search
     std::pair<LiteralSet, bool> PDRSearch::extend(const LiteralSet &s, const Layer &L)
     {
         extend_time.resume();
-        // std::cout << "e1: Call to extend" << std::endl;
-        // std::cout << "e1: s = " << s << std::endl;
-        // std::cout << "e1: L = " << L << std::endl;
-        // input condition
         assert(!s.models(L));
 
         auto A = this->task_proxy.get_operators();
-        //  Pseudocode 3
 
-        // line 2
         SetOfLiteralSets Ls = SetOfLiteralSets(SetType::CLAUSE);
         SetOfLiteralSets Rnoop = SetOfLiteralSets(SetType::CUBE);
 
         std::unordered_set<SetOfLiteralSets, SetOfLiteralSetsHash> Reasons;
         auto sets = L.get_sets();
-        /* for (const LiteralSet &c : sets) */
         for (auto c = sets->begin(); c != sets->end(); ++c) 
         { 
             if (!s.models(*c))
             {
                 Ls.add_set(*c);
-                // line 3
                 Rnoop.add_set(c->invert());
             }
         }
-        // std::cout << "e2: Lˢ = " << Ls << std::endl;
-        // std::cout << "e3: Rₙₒₒₚ = " << Rnoop << std::endl;
 
-        // line 4
         assert(Rnoop.size() > 0);
-        // line 5
         Reasons.insert(Rnoop);
-        // std::cout << "e5: ℛ = " << Reasons << std::endl;
-        // line 7
+
         for (size_t a_i = 0; a_i < A.size(); a_i++)
         {
             auto pre = from_precondition(A[a_i].get_preconditions());
-            // std::cout << "e8: pre = " << pre << std::endl;
-            // line 8
+
             auto pre_sa = LiteralSet(SetType::CLAUSE);
             for (const auto &l : pre.get_literals())
             {
@@ -74,21 +60,16 @@ namespace pdr_search
                 }
             }
             assert(pre_sa.is_subset_eq_of(pre));
-            // std::cout << "e8: preₛᵃ = " << pre_sa << std::endl;
 
             LiteralSet &eff_a = A_effect[a_i]; 
-            // line 9
             LiteralSet t = LiteralSet(s);
             for (const auto &l : eff_a.get_literals())
             {
                 // apply eff_a to t
                 t.apply_literal(l);
             }
-            // std::cout << "e9: effₐ = " << eff_a << std::endl;
-            // std::cout << "e9: t = " << t << std::endl;
-            // line 10
+
             SetOfLiteralSets Lt = SetOfLiteralSets(SetType::CLAUSE);
-            /* for (const LiteralSet &c : sets) */
             for (auto c = sets->begin(); c != sets->end(); ++c)
             {
                 if (!t.models(*c))
@@ -96,13 +77,9 @@ namespace pdr_search
                     Lt.add_set(*c);
                 }
             }
-            // std::cout << "e10: Lᵗ = " << Lt << std::endl;
 
-            // line 11 & 12
             if (pre_sa.size() == 0 && Lt.size() == 0)
             {
-                // std::cout << "e12: Successor t found: " << std::endl;
-                // std::cout << "e12: t = " << t << std::endl;
                 // output condition of successor
                 assert(t.models(L));
 
@@ -110,19 +87,13 @@ namespace pdr_search
                 return std::pair<LiteralSet, bool>(t, true);
             }
 
-            // line 13 & 14
             else if (Ls.is_subset_eq_of(Lt))
             {
-                // std::cout << "e13: Lˢ ⊆ Lᵗ " << std::endl;
-                // std::cout << "e13: Lˢ = " << Ls << std::endl;
-                // std::cout << "e13: Lᵗ = " << Lt << std::endl;
                 continue;
             }
-            // line 15
             else
             {
-                // line 16
-                // Comment: In the pseudocode, the arrow should be pointing left.
+                // Comment: In the pseudocode, the arrow should be pointing left (Suda)
                 SetOfLiteralSets Lt0 = SetOfLiteralSets(SetType::CLAUSE);
                 for (const auto &c : Lt.get_sets())
                 {
@@ -131,14 +102,13 @@ namespace pdr_search
                         Lt0.add_set(c);
                     }
                 }
-                // std::cout << "e16: Lᵗ₀ = " << Lt0 << std::endl;
-                // line 17
+
                 SetOfLiteralSets R_a = SetOfLiteralSets(SetType::CUBE);
                 for (const auto &l : pre_sa.get_literals())
                 {
                     R_a.add_set(LiteralSet(l.invert(), SetType::CUBE));
                 }
-                // std::cout << "e17: Ra (left) = " << R_a << std::endl;
+
                 for (const auto &c : Lt0.get_sets())
                 {
                     LiteralSet ls = LiteralSet(SetType::CUBE);
@@ -151,34 +121,26 @@ namespace pdr_search
                     }
                     R_a.add_set(ls);
                 }
-                // std::cout << "e17: Rₐ = " << R_a << std::endl;
-                // line 18
+
                 Reasons.insert(R_a);
             }
         }
 
-        // line 20
-        // std::cout << "e19: Stage two: compute an overall reason" << std::endl;
         LiteralSet r = LiteralSet(SetType::CUBE);
-        // line 21
+
         std::vector<SetOfLiteralSets> R = std::vector<SetOfLiteralSets>(Reasons.begin(), Reasons.end());
         std::sort(R.begin(), R.end(), [](const SetOfLiteralSets &f, const SetOfLiteralSets &l)
                   { return f.size() < l.size(); });
 
-        // std::cout << "e21: ℛ = " << R << std::endl;
         int i = 0;
         for (const auto &Ra : R)
         {
-            // line 22
-            // std::cout << "e22: Rₐ" << i << " = " << Ra << std::endl;
-
             LiteralSet ra = LiteralSet(SetType::CUBE);
             size_t ra_size = 0;
             for (const auto &ra_cur : Ra.get_sets())
             {
                 if (ra_size == 0 || ra_size > r.set_union(ra_cur).size())
                 {
-                    // std::cout << "e22: candidate minimal rₐ = " << ra_cur << std::endl;
                     ra = ra_cur;
                     ra_size = r.set_union(ra).size();
                 }
@@ -186,9 +148,7 @@ namespace pdr_search
             r = r.set_union(ra);
             i += 1;
         }
-        // std::cout << "e23: r = " << r << std::endl;
 
-        // line 25 - 27 optional
         auto r_literals = r.get_literals();
         for (const auto &l : r_literals) {
             auto ls = LiteralSet(SetType::CUBE);
@@ -213,10 +173,8 @@ namespace pdr_search
             }
         }
 
-        // line 29
         assert(r.size() > 0);
-        // std::cout << "e29: No successor t found, reason: r = " << r << std::endl;
-        // std::cout << "e29: s=" << s << std::endl;
+        
         // output condition of reason.
         assert(r.is_subset_eq_of(s));
         this->extend_time.stop();
@@ -245,12 +203,9 @@ namespace pdr_search
                 // the goal is only a partial assignment.
                 l0->add_set(LiteralSet(Literal::from_fact(g[i]), SetType::CLAUSE));
             }
-            // std::cout << "Layer 0 (goal): " << l0 << std::endl;
-            /* std::cout << "Layer 0 (goal) size: " << l0->size() << " clauses" << std::endl; */
             
             this->seeding_time.stop();     
         
-            //std::cout << "Initial Heuristic Layer " << 0 << ": " << l0 << std::endl;
             this->layers.insert(this->layers.end(), l0);
             this->seeded_layers_size.insert(this->seeded_layers_size.end(), seeded_layer_size); 
             return layers[i];
@@ -264,23 +219,8 @@ namespace pdr_search
             if (this->heuristic)
             {
                 this->heuristic->initial_heuristic_layer(i, l_i);
-                // asserts to make sure heuristic seed layer is valid.
-                /* for (const auto &s : l_i->get_sets()) */
-                /* { */
-                /*     assert(s.is_clause()); */
-                /*     for (const auto &l : s.get_literals()) */
-                /*     { */
-                /*         assert(l.is_positive()); */
-                /*     } */
-                /* } */
-
-                // std::cout << "Initial Heuristic Layer " << i << ": " << l_i << std::endl;
             } 
             
-
-            // std::cout << "Layer " << i << ": " << l_i << std::endl;
-            /* std::cout << "Layer " << i << " size: " << l_i->size() << " clauses" << std::endl; */
-
             this->seeding_time.stop();
             this->layers.insert(this->layers.end(), l_i);
             this->seeded_layers_size.insert(this->seeded_layers_size.end(),l_i->size()); 
@@ -322,7 +262,6 @@ namespace pdr_search
             std::cout << "Layer size (literals) " << i << ": " ;
             size_t lits = 0; 
             auto sets = this->layers[i]->get_sets();
-            /* for (const LiteralSet &ls : sets) { */
             for (auto ls = sets->begin(); ls != sets->end(); ++ls)
             {
                 lits += ls->size();
@@ -333,8 +272,8 @@ namespace pdr_search
         }
         std::cout << "Obligation expansions per layer: ";
         for(size_t i = 0; i < this->obligation_expansions_per_layer.size(); ++i) {
-            std::cout << "l:"<<i<<"ex:"<<
-                this->obligation_expansions_per_layer[i]<<", ";
+            std::cout << "("<<i<<","<<
+                this->obligation_expansions_per_layer[i]<<"), ";
         }
         std::cout << std::endl;
         std::cout << "Total clause propagation time: " << this->clause_propagation_time << std::endl;
@@ -358,18 +297,7 @@ namespace pdr_search
             }
         };
 
-        // std::cout << "------------------" << std::endl;
         std::cout << "Step " << iteration << " of PDR search" << std::endl;
-        // std::cout << "------------------" << std::endl;
-
-        /* if (iteration == 4) { */
-        /*     int i = 0; */
-        /*     for (const auto &layer : this->layers) { */
-        /*         std::cout<< "LAYER " << i++ << std::endl; */
-        /*         std::cout<< *layer << std::endl; */
-        /*         std::cout << "------" << std::endl; */
-        /*     } */
-        /* } */
 
         for (size_t i = 0; i < this->layers.size() - 1; ++i)
         {
@@ -379,91 +307,54 @@ namespace pdr_search
         auto X = all_variables();
         
         size_t obligation_expansions_this_iteration = 0;
-        // line 3
         const int k = iteration;
         iteration += 1;
-
-        // std::cout << "4: Path construction" << std::endl;
-        // line 5
 
         this->path_construction_time.resume();
         auto s_i = from_state(this->task_proxy.get_initial_state());
         if (s_i.models(*get_layer(k)))
         {
-            // std::cout << "5: " << s_i << " ⊧ " << *get_layer(k) << std::endl;
-
-            // line 6
             auto o = std::shared_ptr<Obligation>(new Obligation(s_i, k, nullptr));
-            // std::cout
-            // << "6: Initialize Q " << *o << std::endl;
             std::priority_queue<std::shared_ptr<Obligation>, std::vector<std::shared_ptr<Obligation>>, obligationSort> Q;
             Q.push(o);
             this->obligation_insertions += 1;
 
-            // line 7
             while (!Q.empty())
             {
-
-                // line 8
                 auto si = Q.top();
                 Q.pop();
                 this->obligation_expansions += 1;
                 obligation_expansions_this_iteration += 1;
-                //std::cout << "8: Pop obligation from queue: (s, i) = " << *si << std::endl;
-                if (si->get_parent()) {
-                    //std::cout << "8: Parent = " << *(si->get_parent()) << std::endl;
-                }
                 int i = si->get_priority();
                 auto s = si->get_state();
-                // line 9
                 if (i == 0)
                 {
-                    // line 10
-                    // std::cout << "10: Path found" << std::endl;
                     extract_path(si, s_i);
-                    // std::cout << "Step: i" << s_i << std::endl;
-                    // std::cout << "Plan: " << std::endl;
                     this->path_construction_time.stop();
                     this->obligation_expansions_per_layer.insert(this->obligation_expansions_per_layer.end(), 
                             obligation_expansions_this_iteration);
                     return SearchStatus::SOLVED;
                 }
 
-                // line 11
-                // if extend(s, L_i-1) returns a successor state t
                 auto extended = extend(s, *get_layer(i - 1));
                 if (extended.second)
                 {
                     // extend returns a successor state t
                     LiteralSet &t = extended.first;
-                    // line 12
                     Q.push(si);
-                    // std::cout << "12: Add obligation to queue: " << *si << std::endl;
                     auto newObligation = std::shared_ptr<Obligation>(new Obligation(t, si->get_priority() - 1, si));
                     Q.push(newObligation);
-                    // std::cout << "12: Add obligation to queue: " << *newObligation << std::endl;
                     this->obligation_insertions += 2;
                 }
                 else
                 {
-                    // line 14 extend returns a reason r
                     LiteralSet &r = extended.first;
-                    // line 15
                     // Only add to set L_i, because of layer delta encoding
                     auto L_i = get_layer(i);
                     L_i->add_set(r.invert());
-                    //for (int j = 0; j <= i; j++)
-                    //{
-                    //    auto L_j = get_layer(j);
-                        // std::cout << "15: Push clause to L_" << j << ": c = " << r.invert() << std::endl;
-                    //    L_j->add_set(r.invert());
-                        // std::cout << "15: L_" << j << " = " << *L_j << std::endl;
-                    //}
 
-                    // line 18 obligation rescheduling
                     if (enable_obligation_rescheduling && i < k)
                     {
-                        // line 19
                         auto newObligation = std::shared_ptr<Obligation>(new Obligation(s, i + 1, si->get_parent()));
                         Q.push(newObligation);
                         this->obligation_insertions += 1;
@@ -481,44 +372,29 @@ namespace pdr_search
         this->clause_propagation_time.resume();
         auto A = this->task_proxy.get_operators();
 
-        // std::cout << "clause propagation start" << std::endl;
         for (size_t j = 0; j < this->layers.size() - 1; ++j)
         {
-            // std::cout << "layer " << (j) << " = " << this->layers[j] << std::endl;
             assert(this->layers[j + 1]->is_subset_eq_of(*(this->layers[j])));
         }
-        // std::cout << "layer " << " = " << this->layers[this->layers.size()-1] << std::endl;
-
-        // std::cout << "22: Clause propagation" << std::endl;
-        // line 22
         for (int i = 1; i <= k + 1; i++)
         {
-            // std::cout << "22: foreach i = " << i << " of " << k + 1 << std::endl;
-            // line 23
             std::shared_ptr<Layer> Li1 = get_layer(i - 1);
-            // std::cout << "22: L_" << (i-1) << " = " << Li1 << std::endl;
-            // std::cout << "22: L_" << i << " = " << Li << std::endl;
+            // NOTE: this copy can not be prevented by dereferencing the 
+            // pointer in the for loop. The layer Li-1 gets modified inside of the 
+            // loop. Without copying the iterator gets invalidated and crashes on linux.
             auto delta = *Li1->get_delta();
             for (const auto c : delta)
             {
-                // std::cout << "23: foreach c in L_" << (i - 1) << " \\ L_" << i << std::endl;
-                // std::cout << "25: c = " << c << std::endl;
-                // std::cout << "25: X \\ c  = " << X.set_minus(c.pos()) << std::endl;
-
-                // line 25
                 LiteralSet s_c = LiteralSet(X.get_literals(), SetType::CUBE);
                 for (const auto &p : c.get_literals())
                 {
                     s_c.apply_literal(p.neg());
                 }
-                // std::cout << "25: s_c " << s_c << std::endl;
 
-                // line 26
                 bool for_all_not_models = true;
                 for (size_t a_i = 0; a_i < A.size(); a_i++)
                 {
                     LiteralSet pre_a = from_precondition(A[a_i].get_preconditions());
-                    // build apply(s_c, a)
                     LiteralSet applied = LiteralSet(s_c);
                     LiteralSet effect_a = A_effect[a_i];
                     for (const auto &l : effect_a.get_literals())
@@ -533,22 +409,17 @@ namespace pdr_search
                 }
                 if (for_all_not_models)
                 {
-                    // std::cout << "26: for_all_not_models" << std::endl;
-                    // line 27
                     get_layer(i)->add_set(c);
-                    // std::cout << "27: Push clause to L_" << i << ": c = " << c << ", L = " << *get_layer(i) << std::endl;
                 }
             }
+            // Li-1 == Li
             if (get_layer(i-1)->get_delta()->empty())
             {
-                // line 30
-                // std::cout << "30: No plan possible" << std::endl;
                 this->clause_propagation_time.stop();
                 this->obligation_expansions_per_layer.insert(this->obligation_expansions_per_layer.end(), 
                         obligation_expansions_this_iteration);
                 return SearchStatus::FAILED;
             }
-            // std::cout << "clause propagation " << i <<std::endl;
             for (size_t j = 0; j < this->layers.size() - 1; ++j)
             {
                 assert(this->layers[j + 1]->is_subset_eq_of(*(this->layers[j])));
@@ -557,16 +428,6 @@ namespace pdr_search
         this->clause_propagation_time.stop();
         this->obligation_expansions_per_layer.insert(this->obligation_expansions_per_layer.end(), 
                 obligation_expansions_this_iteration);
-
-        // if (enable_layer_simplification)
-        // {
-        //     for (int i = 0; get_layer(i)->size() != 0; i++)
-        //     {
-        //         // std::cout << "Layer L_" << i << ": " << *get_layer(i) << std::endl;
-        //         get_layer(i)->simplify();
-        //         // std::cout << "Layer L_" << i << ": " << *get_layer(i) << std::endl;
-        //     }
-        // }
         return SearchStatus::IN_PROGRESS;
     }
 
@@ -601,7 +462,6 @@ namespace pdr_search
                     continue;
                 }
                 matched_op = OperatorID(operators[a_i].get_id());
-                //std::cout << "Step " << i << " - matching operator " << op.get_name() << std::endl;
             }
             assert(matched_op != OperatorID::no_operator);
             plan.insert(plan.end(), matched_op);

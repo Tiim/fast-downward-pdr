@@ -50,11 +50,8 @@ namespace pdr_search
     os << color << (l.positive ? "" : "¬") << "(";
     if (name.size() > 0)
     {
-      // os << COLOR_GRAY;
       os << name;
-      // os << "," << color;
     }
-    // os << l.variable << "," << l.value;
     os << ")" COLOR_NONE;
     return os;
   }
@@ -355,7 +352,7 @@ namespace pdr_search
     utils::feed(hs, this->set_type);
     utils::feed(hs, this->literals.size());
 
-    // for ordering independent hash function
+    // ordering independent hash function
     size_t literal_hash = 0;
     for (const auto &s: this->literals) {
         literal_hash ^= s.hash();
@@ -509,11 +506,6 @@ namespace pdr_search
             [&lse] (LiteralSet ls) {return lse.count(ls) == 0;}
         );
 
-    /* set_difference(  */
-    /*     se.begin(), se.end(), */
-    /*     lse.begin(), lse.end(), */
-    /*     inserter(result, result.end())); */
-
     SetOfLiteralSets lnew = SetOfLiteralSets();
     for (const auto &clause : result)
     {
@@ -529,7 +521,7 @@ namespace pdr_search
     utils::feed(hs, this->set_type);
     utils::feed(hs, this->sets.size());
 
-    // for ordering independent hash function
+    // ordering independent hash function
     size_t literal_hash = 0;
     for (const auto &s: this->sets) {
         literal_hash ^= s.hash();
@@ -633,7 +625,6 @@ namespace pdr_search
           this->parent->print_stack();
       }
       std::cout << " Layer "<< (this->parent?"(p)":"" )<<(this->child?"(c)":"");
-      //std::cout << *this << std::endl;
       std::cout << "Layer delta: ";
       auto delta = *child->get_delta();
       for (const auto &s : delta) {
@@ -647,13 +638,6 @@ namespace pdr_search
   void Layer::add_set(const LiteralSet &c)
   {
     assert(c.is_clause());
-    /* std::cout << "---- add_set ----" <<std::endl; */
-    /* std::cout << "adding set "<<c<<std::endl; */
-    /* std::cout << "Layer stack:" << std::endl; */
-    /* this->print_stack(); */
-    /* std::cout << "End Layer stack" << std::endl; */
-
-
     // don't insert if current or child layer already has the literalset
     bool child_already_has_set = false;
     Layer* child = this;
@@ -668,7 +652,6 @@ namespace pdr_search
 
     if (!child_already_has_set) {
         this->__sets->insert(c);
-        //
         // erase from all parent layers
         std::shared_ptr<Layer> parent = this->parent;
         while (parent != nullptr) {
@@ -688,9 +671,6 @@ namespace pdr_search
   {
     if (this->size() > s.size())
     {
-      /* std::cout<< "is_subset_eq_of (size)" << std::endl */
-      /*     << *this << std::endl */
-      /*     << s << std::endl; */
       return false;
     }
     auto sets = this->get_sets();
@@ -698,10 +678,6 @@ namespace pdr_search
     {
       if (!s.contains_set(c))
       {
-        /* std::cout<< "is_subset_eq_of " << std::endl */
-        /*   << "literal that violates: " << c <<std::endl */
-        /*   << "subset: " << *this << std::endl */
-        /*   << "superset: " << s << std::endl; */
         return false;
       }
     }
@@ -740,25 +716,7 @@ namespace pdr_search
 
   void Layer::simplify()
   {
-    /*LiteralSet intersection = LiteralSet(SetType::CLAUSE);
-    int i = 0;
-    for (LiteralSet literal_set : sets)
-    {
-      literal_set.simplify();
-      if (i == 0)
-      {
-        intersection = literal_set;
-      }
-      else
-      {
-        intersection = intersection.set_intersect(literal_set);
-      }
-      if (literal_set.size() <= 1) 
-      {
-        intersection = LiteralSet(SetType::CLAUSE);
-        break;
-      }
-      i += 1;
-    }*/
+      // NOTE: Don't "simplify" the layers. 
+      // this could violate the layer invariants
   }
 }
