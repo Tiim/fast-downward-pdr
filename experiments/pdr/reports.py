@@ -433,3 +433,42 @@ class LambdaTexReport(TxtReport):
 
     def get_txt(self):
         return str(self.lmda(self.props))
+
+
+class LatexCoverate(TxtReport):
+    def __init__(self, **kwargs):
+        TxtReport.__init__(self, **kwargs, format="txt")
+
+    def get_txt(self):
+        table = {}
+        total_tbl = {}
+        all_algs = set()
+        all_domains = set()
+        for id, run in self.props.items():
+            domain = run["domain"]
+            alg = run["algorithm"]
+            all_algs.add(alg)
+            all_domains.add(domain)
+
+            if alg not in table:
+                table[alg] = {}
+                total_tbl[alg] = 0
+            if domain not in table[alg]:
+                table[alg][domain] = 0
+
+            if run["error"] in ["success", "search-unsolvable-incomplete"]:
+                table[alg][domain] += 1
+                total_tbl[alg] += 1
+        txt = []
+
+        all_algs = list(all_algs)
+        all_domains = list(all_domains)
+
+        txt.append(" \t " + (" \t ".join(all_algs)))
+        for domain in all_domains:
+            txt.append(domain + " \t " + (" \t ".join(
+                [str(table[alg][domain]) for alg in all_algs]
+            )))
+        txt.append("Total \t " + (" \t ".join(
+            [str(total_tbl[alg]) for alg in all_algs])))
+        return "\n".join(txt)

@@ -270,13 +270,119 @@ def categorize_by_comparison(prop, less="less", more="more", missing="missing"):
 
 def add_reports(exp, pairs,  CONFIGS):
 
-    excluded_algs = ["greedy-5000", "rand-5000"]
+    excluded_algs = ["greedy-200", "greedy-5000", "rand-5000"]
     exp.add_report(reports.LambdaTexReport(
         lambda data: max([(run["pdb_projected_states"]
-                           if "pdb_projected_states" in run and "cegar" in run["algorithm"] else 0) for alg, run in data.items()])
-        # and "cegar" in run["algorithm"]
+                           if "pdb_projected_states" in run and "cegar" in run["algorithm"] else 0) for alg, run in data.items()]),
+        filter=[filter_exclude_algs(excluded_algs)],
     ),
         name="cegar_max_projected_states")
+
+    def less_clauses_faster(data):
+        table = {}
+        for id, run in data.items():
+            domain = run["domain"]
+            problem = run["problem"]
+            alg = run["algorithm"]
+            if alg not in table:
+                table[alg] = {
+                    "few_and_faster": 0,
+                    "few": 0,
+                    "more_and_slower": 0,
+                    "more": 0,
+                    "total": 0,
+                }
+            ref = data[f"latest:01-pdr-noop-{domain}-{problem}"]
+
+            if "layer_size_first" not in ref or "layer_size_first" not in run or "total_time" not in ref or "total_time" not in run:
+                continue
+
+            table[alg]["total"] += 1
+            if run["layer_size_first"] < ref["layer_size_first"]:
+                table[alg]["few"] += 1
+                if run["total_time"] < ref["total_time"]:
+                    table[alg]["few_and_faster"] += 1
+            if run["layer_size_first"] > ref["layer_size_first"]:
+                table[alg]["more"] += 1
+                if run["total_time"] > ref["total_time"]:
+                    table[alg]["more_and_slower"] += 1
+
+        lines = []
+        for k, t in table.items():
+            if t["few"] != 0:
+                lines.append(
+                    k + " " + str((t["few_and_faster"] / t["few"]) * 100) + "%")
+            if t["more"] != 0:
+                lines.append(
+                    k + " " + str((t["more_and_slower"] / t["more"]) * 100) + "%")
+
+        return "\n".join(lines)
+
+    def avg_variance(data):
+        table = {}
+        for id, run in data.items():
+            domain = run["domain"]
+            problem = run["problem"]
+            alg = run["algorithm"]
+            if alg not in table:
+                table[alg] = []
+            ref = data[f"latest:01-pdr-noop-{domain}-{problem}"]
+
+            if "total_time" not in ref or "total_time" not in run or run["error"] != "success" or ref["error"] != "success":
+                continue
+            runt = run["total_time"]
+            reft = ref["total_time"]
+            if runt == 0 or reft == 0:
+                continue
+
+            table[alg].append(runt/reft)
+
+        lines = []
+        for k, t in table.items():
+            mean = sum(t) / len(t)
+            var = sum((i - mean) ** 2 for i in t) / len(t)
+            lines.append(f"{k} mean: {mean}, variance: {var}")
+
+        return "\n".join(lines)
+
+    exp.add_report(reports.LambdaTexReport(
+        avg_variance,
+        filter=[filter_exclude_algs(excluded_algs)],
+    ),
+        name="mean_variance")
+    exp.add_report(reports.LambdaTexReport(
+        less_clauses_faster,
+        filter=[add_first_layer_filter, filter_exclude_algs(excluded_algs)],
+    ),
+        name="less_clauses_faster")
+
+    def find_task_with_high_obligation_difference(data):
+        probs = {}
+        for _, run in data.items():
+            alg = algo_format(run["algorithm"])
+            prob = run["problem"]
+            if prob not in probs:
+                probs[prob] = {}
+            probs[prob][alg] = run
+        output = []
+        for prob, algs in probs.items():
+            print(algs)
+            greedy = algs["greedy-1000"]
+            noop = algs["noop"]
+            greedy_ob = greedy["obligation_expansions"] if "obligation_expansions" in greedy else 0
+            noop_ob = noop["obligation_expansions"] if "obligation_expansions" in noop else 0
+            if noop_ob > greedy_ob or noop_ob == 0 or greedy_ob == 0:
+                continue
+            diff = greedy_ob - noop_ob
+            time = max(greedy["total_time"], noop["total_time"])
+            output.append(
+                f"diff obligation_expansions: {diff:06d}, greedy exp: {greedy_ob}, noop exp: {noop_ob}, prob: {prob}, max_time: {time}")
+        return "\n".join(output)
+    exp.add_report(
+        reports.LambdaTexReport(find_task_with_high_obligation_difference,
+                                filter=[lambda run: algo_format(run["algorithm"]) in ["noop", "greedy-1000"]]),
+        name="task_with_high_obligation_difference")
+
     exp.add_report(reports.LatexTable(
         x_attrs=[
             "error",
@@ -298,11 +404,40 @@ def add_reports(exp, pairs,  CONFIGS):
     ),
         name="tbl_out-of-time")
 
+    exp.add_report(reports.LatexCoverate(
+        filter=[filter_exclude_algs(excluded_algs)]), name="coverage")
+
+    exp.add_report(reports.LatexTable(
+        x_attrs=[
+            "error",
+            "error",
+            "error",
+        ],
+        x_aggrs=[
+            lambda prev, cur: prev +
+            1 if cur in ["success", "search-unsolvable-incomplete"] else prev,
+            lambda prev, cur: prev + 1 if cur == "search-out-of-time" else prev,
+            lambda prev, cur: prev + 1 if cur not in [
+                "success", "search-out-of-time", "search-unsolvable-incomplete"] else prev,
+            # lambda prev, cur: prev + 1,
+        ],
+        filter=[filter_exclude_algs(excluded_algs)],
+        x_initial=[0, 0, 0],
+        show_header=False,
+        y_formatter=algo_format
+    ),
+        name="tbl_out-of-time")
+
+    def add_l0(run):
+        run["layer_size_seeded_l0"] = run["layer_size_seeded"][0] if len(
+            run["layer_size_seeded"]) > 0 else 0
+        return True
     exp.add_report(reports.TikZBarChart(
         x_attrs=[
-            "layer_size_seeded_total",
+            "layer_size_seeded_l0",
         ],
-        filter=[filter_exclude_algs(["noop"] + excluded_algs)],
+        filter=[filter_exclude_algs(
+            ["noop"] + excluded_algs), add_l0],
         y_formatter=algo_format,
         y_label="Average Seeded Clauses"
     ),
@@ -317,6 +452,13 @@ def add_reports(exp, pairs,  CONFIGS):
                 less="fewer expansions", missing="at least one run failed"),
             "show_missing": True,
             "relative": True,
+        },        {
+            "attribute": "total_time",
+            "filter": [],
+            "category": lambda run, run2: run["domain"],
+            "show_missing": True,
+            "relative": True,
+            "suffix": "-domain"
         },
         {
             "attribute": "obligation_insertions",
